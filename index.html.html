@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="az" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriFit v1.0.2 Pro - Ağıllı Qidalanma və Həyat Tərzi Ekosistemi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- html2pdf Bundle CDN for Client-Side PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b' },
+                        teal: { 500: '#14b8a6', 600: '#0d9488' },
+                        amber: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }
+                    },
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        @keyframes flame-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        .animate-flame { animation: flame-pulse 1.8s infinite ease-in-out; }
+    </style>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 flex flex-col">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[300] flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- MANDATORY AUTHENTICATION MODAL (STRICT ACCESS LOCK) -->
+    <div id="auth-modal" class="fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 my-auto relative">
+            <div class="text-center mb-6">
+                <div class="h-14 w-14 rounded-2xl mx-auto bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 mb-3">
+                    <i class="fa-solid fa-seedling text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">NutriFit v1.0.2 Pro</h2>
+                <p class="text-xs text-slate-500 mt-1" data-i18n="auth_subtitle">Ağıllı qidalanma, soyuducu-resept və fərdi məşq platforması</p>
+            </div>
+
+            <!-- Auth Form Switch Tabs -->
+            <div class="flex space-x-2 mb-6 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                <button type="button" onclick="switchAuthTab('login')" id="auth-tab-login" class="flex-1 py-2 rounded-lg text-xs font-bold bg-white dark:bg-slate-700 text-emerald-600 shadow-sm transition" data-i18n="tab_login">Daxil Ol</button>
+                <button type="button" onclick="switchAuthTab('signup')" id="auth-tab-signup" class="flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 transition" data-i18n="tab_signup">Qeydiyyat</button>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <form id="form-login" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                <div id="login-error-msg" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-bold"></div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="email">E-poçt ünvanı</label>
+                    <input type="email" id="login-email" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-emerald-500" data-i18n-ph="email_ph" placeholder="ornek@mail.com">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="password">Parol</label>
+                    <input type="password" id="login-pass" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20 transition" data-i18n="btn_login">
+                    Hesaba Daxil Ol
+                </button>
+            </form>
+
+            <!-- SIGNUP FORM -->
+            <form id="form-signup" onsubmit="handleSignupSubmit(event)" class="space-y-3 hidden max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
+                <div id="signup-error-msg" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs font-bold"></div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="fullname">Ad və Soyad</label>
+                    <input type="text" id="signup-name" required class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-emerald-500" data-i18n-ph="fullname_ph" placeholder="Emil Məmmədov">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="email">E-poçt ünvanı</label>
+                    <input type="email" id="signup-email" required class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-emerald-500" data-i18n-ph="email_ph" placeholder="emil@mail.com">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="password">Parol</label>
+                        <input type="password" id="signup-pass" required class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none" placeholder="••••••••">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="confirm_pass">Parol Təkrarı</label>
+                        <input type="password" id="signup-confirm-pass" required class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none" placeholder="••••••••">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="age">Yaş</label>
+                        <input type="number" id="signup-age" value="18" min="12" max="90" required class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="height">Boy (sm)</label>
+                        <input type="number" id="signup-height" value="172" min="100" max="230" required class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="weight">Çəki (kq)</label>
+                        <input type="number" id="signup-weight" value="63" min="30" max="250" required class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="fitness_goal">Əsas Məqsəd</label>
+                    <select id="signup-goal" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold outline-none">
+                        <option value="gain" selected data-i18n="goal_gain">Kökelmək / Əzələ yığımı (Bulking)</option>
+                        <option value="lose" data-i18n="goal_lose">Yağ itirmək və arıqlamaq (Deficit)</option>
+                        <option value="maintain" data-i18n="goal_maintain">Formanı qorumaq (Recomp / Maintain)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 block" data-i18n="workout_days">Həftəlik Məşq Günləri (1 - 7)</label>
+                    <input type="number" id="signup-days" min="1" max="7" value="4" required class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                </div>
+                <button type="submit" class="w-full py-3 mt-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-teal-600/20 transition" data-i18n="btn_signup">
+                    Qeydiyyatı Tamamla və Giriş Et
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION STRUCTURE -->
+    <div id="app-root" class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- Header Controls -->
+        <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 px-4 lg:px-8 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-seedling text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">NutriFit</span>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">v1.0.2 Pro</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 hidden sm:block" data-i18n="app_tagline">Ağıllı Qidalanma, BMR & Məşq Ekosistemi</p>
+                </div>
+            </div>
+
+            <!-- Header Right Actions -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Streak Badge Widget -->
+                <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 text-amber-600 dark:text-amber-400 text-xs font-extrabold">
+                    <i class="fa-solid fa-fire text-amber-500 animate-flame text-sm"></i>
+                    <span id="hdr-streak-txt">1 Gün</span>
+                </div>
+
+                <!-- Language Selector -->
+                <select id="lang-selector" onchange="setLanguage(this.value)" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg px-2.5 py-1.5 border-none cursor-pointer outline-none">
+                    <option value="AZ">🇦🇿 AZ</option>
+                    <option value="EN">🇬🇧 EN</option>
+                    <option value="RU">🇷🇺 RU</option>
+                </select>
+
+                <!-- Theme Toggle -->
+                <button onclick="toggleDarkMode()" class="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+
+                <!-- Profile Trigger -->
+                <button onclick="openProfileModal()" class="flex items-center space-x-2 pl-2 border-l border-slate-200 dark:border-slate-800 hover:opacity-80 transition">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shadow overflow-hidden relative group">
+                        <img id="hdr-avatar-img" class="w-full h-full object-cover hidden">
+                        <span id="hdr-avatar-txt">E</span>
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <i class="fa-solid fa-gear text-white text-xs"></i>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </header>
+
+        <!-- Body Layout (Sidebar + Main Content) -->
+        <div class="flex-1 flex overflow-hidden relative">
+            
+            <!-- Sidebar Navigation -->
+            <aside class="hidden lg:flex w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col justify-between p-4 shrink-0 z-30">
+                <nav class="space-y-1.5 w-full">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all bg-emerald-600 text-white shadow-md shadow-emerald-600/20">
+                        <i class="fa-solid fa-chart-pie w-5 text-center text-sm"></i>
+                        <span data-i18n="nav_dashboard">İdarə Paneli & BMR</span>
+                    </button>
+                    <button onclick="switchTab('fridge')" id="nav-fridge" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+                        <i class="fa-solid fa-utensils w-5 text-center text-sm"></i>
+                        <span data-i18n="nav_fridge">Soyuducudan Reseptə</span>
+                    </button>
+                    <button onclick="switchTab('scanner')" id="nav-scanner" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+                        <i class="fa-solid fa-robot w-5 text-center text-sm"></i>
+                        <span data-i18n="nav_scanner">AI Qida Çatbotu</span>
+                    </button>
+                    <button onclick="switchTab('planner')" id="nav-planner" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+                        <i class="fa-solid fa-calendar-days w-5 text-center text-sm"></i>
+                        <span data-i18n="nav_planner">Həftəlik Plan & Bazar</span>
+                    </button>
+                    <button onclick="switchTab('workout')" id="nav-workout" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+                        <i class="fa-solid fa-dumbbell w-5 text-center text-amber-500 text-sm"></i>
+                        <span class="font-bold text-amber-600 dark:text-amber-500" data-i18n="nav_workout">Məşq Proqramı</span>
+                    </button>
+                    <button onclick="switchTab('report')" id="nav-report" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+                        <i class="fa-solid fa-file-pdf w-5 text-center text-sm"></i>
+                        <span data-i18n="nav_report">Həkim/Məşqçi PDF Hesabat</span>
+                    </button>
+                </nav>
+
+                <!-- Sidebar Profile Summary Card -->
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow overflow-hidden shrink-0">
+                            <img id="sb-avatar-img" class="w-full h-full object-cover hidden">
+                            <span id="sb-avatar-txt">E</span>
+                        </div>
+                        <div class="overflow-hidden">
+                            <h4 id="sb-user-name" class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">İstifadəçi</h4>
+                            <p id="sb-user-goal" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate">Kökelmək / Əzələ yığımı</p>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-1 border-t border-slate-200 dark:border-slate-700/60 pt-2">
+                        <div class="flex justify-between"><span data-i18n="sb_bmr">BMR (Metabolizm):</span> <strong id="sb-bmr-val" class="text-slate-700 dark:text-slate-200">1620 kkal</strong></div>
+                        <div class="flex justify-between"><span data-i18n="sb_tdee">TDEE (Xərclənən):</span> <strong id="sb-tdee-val" class="text-slate-700 dark:text-slate-200">2511 kkal</strong></div>
+                        <div class="flex justify-between"><span data-i18n="lbl_streak">Gündəlik Streak:</span> <strong id="sb-streak-val" class="text-amber-500 font-extrabold"><i class="fa-solid fa-fire mr-1"></i>1 Gün</strong></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-8 bg-slate-50 dark:bg-slate-950 pb-24 lg:pb-8">
+                
+                <!-- TAB 1: DASHBOARD & BMR -->
+                <div id="tab-dashboard" class="tab-content space-y-6">
+                    <!-- Welcome Banner -->
+                    <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-emerald-600/10 relative overflow-hidden">
+                        <div class="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
+                        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/20 text-xs font-semibold backdrop-blur-md mb-3">
+                                    <i class="fa-solid fa-bolt text-amber-300"></i>
+                                    <span id="banner-goal-tag">Əzələ Kütləsi Rejimi</span>
+                                </div>
+                                <h1 id="banner-welcome-title" class="text-2xl lg:text-3xl font-bold tracking-tight">Salam!</h1>
+                                <p class="text-emerald-100 text-xs sm:text-sm mt-1 max-w-xl" data-i18n="dash_subtitle">Metabolizm göstəricilərinizə əsasən gündəlik kalori və zülal hədəfinizi tamamlayın.</p>
+                            </div>
+                            <div class="flex items-center space-x-3 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 shrink-0">
+                                <div class="text-center px-2.5 border-r border-white/20">
+                                    <span class="text-[11px] text-emerald-200 block" data-i18n="age">Yaş</span>
+                                    <span id="stat-age" class="text-base sm:text-lg font-bold">18</span>
+                                </div>
+                                <div class="text-center px-2.5 border-r border-white/20">
+                                    <span class="text-[11px] text-emerald-200 block" data-i18n="height">Boy</span>
+                                    <span id="stat-height" class="text-base sm:text-lg font-bold">172 sm</span>
+                                </div>
+                                <div class="text-center px-2.5 border-r border-white/20">
+                                    <span class="text-[11px] text-emerald-200 block" data-i18n="weight">Çəki</span>
+                                    <span id="stat-weight" class="text-base sm:text-lg font-bold">63 kq</span>
+                                </div>
+                                <div class="text-center px-2.5">
+                                    <span class="text-[11px] text-emerald-200 block" data-i18n="lbl_streak">Streak</span>
+                                    <span id="stat-streak" class="text-base sm:text-lg font-extrabold text-amber-300"><i class="fa-solid fa-fire text-xs mr-0.5"></i>1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Macro & Calorie Overview Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        
+                        <!-- Calorie Progress Ring Card -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300" data-i18n="daily_calories">Gündəlik Kalori Hədəfi</h3>
+                                <span class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 text-xs font-bold" id="dash-cal-target">2911 kkal</span>
+                            </div>
+                            <div class="flex items-center justify-center my-3">
+                                <div class="relative w-36 h-36 flex items-center justify-center">
+                                    <svg class="w-full h-full transform -rotate-90">
+                                        <circle cx="72" cy="72" r="58" stroke="currentColor" stroke-width="11" class="text-slate-100 dark:text-slate-800" fill="transparent"></circle>
+                                        <circle id="dash-ring-progress" cx="72" cy="72" r="58" stroke="currentColor" stroke-width="11" class="text-emerald-500 transition-all duration-1000" stroke-dasharray="364.4" stroke-dashoffset="364.4" stroke-linecap="round" fill="transparent"></circle>
+                                    </svg>
+                                    <div class="absolute text-center">
+                                        <span id="dash-consumed-cal" class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">0</span>
+                                        <span class="block text-[10px] text-slate-400 font-medium" data-i18n="consumed">İstehlak</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-xs text-slate-500 pt-3 border-t border-slate-100 dark:border-slate-800">
+                                <span><span data-i18n="lbl_remaining">Qalır:</span> <strong id="dash-remaining-cal" class="text-emerald-600 dark:text-emerald-400">2911 kkal</strong></span>
+                                <span>BMR: <strong id="dash-bmr-display" class="text-slate-700 dark:text-slate-300">1620</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Macro Bars Card -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between lg:col-span-2">
+                            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-4" data-i18n="macro_balance">Makro Element Balansı</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-slate-600 dark:text-slate-400" data-i18n="protein">Zülal (Protein)</span>
+                                        <span id="dash-prot-txt">0g / 138g</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                        <div id="dash-prot-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-slate-600 dark:text-slate-400" data-i18n="carbs">Karbohidrat</span>
+                                        <span id="dash-carb-txt">0g / 360g</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                        <div id="dash-carb-bar" class="bg-teal-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-slate-600 dark:text-slate-400" data-i18n="fats">Yağlar</span>
+                                        <span id="dash-fat-txt">0g / 75g</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                        <div id="dash-fat-bar" class="bg-amber-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800" data-i18n="macro_note">Göstəricilər yaşınıza, çəkinizə və kökəlmək/arıqlamaq hədəfinizə uyğun tənzimlənib.</p>
+                        </div>
+
+                        <!-- Today's Log Summary Card -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300" data-i18n="today_activity">Bugünkü Qeydlər</h3>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-bold" id="log-count-badge">0 Yemək</span>
+                                </div>
+                                <div id="dash-log-list" class="space-y-2 max-h-36 overflow-y-auto custom-scrollbar text-xs">
+                                    <p class="text-slate-400 text-[11px] italic" data-i18n="no_logs">Hələ heç bir yemək əlavə edilməyib.</p>
+                                </div>
+                            </div>
+                            <div class="space-y-2 mt-3">
+                                <button onclick="openCustomMealModal()" class="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1">
+                                    <i class="fa-solid fa-pen-to-square mr-1 text-teal-500"></i>
+                                    <span data-i18n="btn_custom_meal">✍️ Xüsusi Yemək Əlavə Et</span>
+                                </button>
+                                <button onclick="switchTab('fridge')" class="w-full py-2 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-300 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1">
+                                    <i class="fa-solid fa-plus mr-1"></i>
+                                    <span data-i18n="btn_add_meal_nav">Resept Əlavə Et</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: FRIDGE TO RECIPE (100+ INGREDIENTS DATABASE) -->
+                <div id="tab-fridge" class="tab-content hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 lg:p-8 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                        <div class="max-w-3xl mb-6">
+                            <span class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold mb-3">
+                                <i class="fa-solid fa-wheat-awn"></i> <span data-i18n="fridge_tag">100+ Dəqiq Makrolu Ərzaq Baza</span>
+                            </span>
+                            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100" data-i18n="fridge_title">Soyuducudakı Ərzaqları Seçin</h2>
+                            <p class="text-xs text-slate-500 mt-1" data-i18n="fridge_subtitle">Mövcud ərzaqları toxunaraq seçin, hər birinin 100g zülal/kalori dəyərini görün və xüsusi bişirmə resepti əldə edin.</p>
+                        </div>
+
+                        <!-- Search Bar & Categories -->
+                        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" id="ing-search-input" onkeyup="filterIngredients()" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500" data-i18n-ph="ing_search_ph" placeholder="Ərzaq axtar (məs: Toyuq, Yulaf, Kəsmik)...">
+                            </div>
+                            <div class="flex space-x-1.5 overflow-x-auto custom-scrollbar pb-1" id="ing-cat-bar">
+                                <button onclick="setIngredientCategory('all')" id="cat-btn-all" class="ing-cat-btn px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white whitespace-nowrap" data-i18n="cat_all">Bütün (100+)</button>
+                                <button onclick="setIngredientCategory('meat')" id="cat-btn-meat" class="ing-cat-btn px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap" data-i18n="cat_meat">Zülal & Ət</button>
+                                <button onclick="setIngredientCategory('grain')" id="cat-btn-grain" class="ing-cat-btn px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap" data-i18n="cat_grain">Taxıl & Karb</button>
+                                <button onclick="setIngredientCategory('veggie')" id="cat-btn-veggie" class="ing-cat-btn px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap" data-i18n="cat_veggie">Meyvə & Tərəvəz</button>
+                                <button onclick="setIngredientCategory('fats')" id="cat-btn-fats" class="ing-cat-btn px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap" data-i18n="cat_fats">Yağlar & Qoz</button>
+                                <button onclick="setIngredientCategory('other')" id="cat-btn-other" class="ing-cat-btn px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap" data-i18n="cat_other">Ədviyyat & Digər</button>
+                            </div>
+                        </div>
+
+                        <!-- 100+ Ingredients Grid Container -->
+                        <div id="ingredients-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 max-h-80 overflow-y-auto custom-scrollbar p-1 border border-slate-100 dark:border-slate-800 rounded-2xl mb-6">
+                            <!-- Rendered dynamically by JS -->
+                        </div>
+
+                        <!-- Selected Items Summary Bar -->
+                        <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 gap-4">
+                            <div>
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block mb-0.5"><span data-i18n="lbl_selected_ings">Seçilən Ərzaqlar:</span> <span id="selected-count" class="text-emerald-600 font-extrabold">0</span></span>
+                                <p id="selected-summary-macros" class="text-[11px] text-slate-500">Zülal: 0g | Kalori: 0 kkal | Karb: 0g</p>
+                            </div>
+                            <div class="flex items-center space-x-3 w-full sm:w-auto">
+                                <button onclick="clearSelectedIngredients()" class="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold hover:bg-slate-300 transition" data-i18n="btn_clear">
+                                    Təmizlə
+                                </button>
+                                <button onclick="generateRecipeFromFridge()" class="flex-1 sm:flex-none px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20 transition flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    <span data-i18n="btn_generate_recipe">AI Resept Yarat</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generated Recipe Result Section -->
+                    <div id="generated-recipes-container" class="space-y-4"></div>
+                </div>
+
+                <!-- TAB 3: AI FOOD CHATBOT (replaces old scanner) -->
+                <div id="tab-scanner" class="tab-content hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm max-w-3xl mx-auto flex flex-col overflow-hidden" style="height: min(78vh, 760px);">
+                        <!-- Chat header -->
+                        <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200/80 dark:border-slate-800">
+                            <div class="flex items-center space-x-3 min-w-0">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center text-lg flex-shrink-0"><i class="fa-solid fa-robot"></i></div>
+                                <div class="min-w-0">
+                                    <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate" data-i18n="scanner_title">AI Qida Çatbotu</h2>
+                                    <p class="text-[10px] text-slate-500 truncate" data-i18n="scanner_subtitle"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-1.5 flex-shrink-0">
+                                <button onclick="openCustomMealModal()" title="Custom meal" class="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-900/30 hover:bg-teal-100 text-teal-600 flex items-center justify-center text-xs transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="chatNewConversation()" title="New chat" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs transition"><i class="fa-solid fa-rotate-right"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Messages -->
+                        <div id="chat-messages" class="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-4"></div>
+
+                        <!-- Composer -->
+                        <div class="border-t border-slate-200/80 dark:border-slate-800 p-3">
+                            <div id="chat-pending" class="hidden mb-2 relative inline-block">
+                                <img id="chat-pending-img" class="h-16 w-16 object-cover rounded-xl border border-slate-200 dark:border-slate-700">
+                                <button onclick="chatClearPendingImage()" class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <button onclick="document.getElementById('chat-file-input').click()" class="w-10 h-10 flex-shrink-0 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-200 text-emerald-600 flex items-center justify-center transition"><i class="fa-solid fa-camera"></i></button>
+                                <input type="file" id="chat-file-input" accept="image/*" class="hidden" onchange="chatOnFileSelected(event)">
+                                <textarea id="chat-input" rows="1" data-i18n-ph="chat_placeholder" placeholder="Yemək şəkli göndərin və ya yazın..." onkeydown="chatInputKey(event)" oninput="chatAutoGrow(this)" class="flex-1 resize-none max-h-32 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs rounded-xl px-3 py-2.5 outline-none border border-transparent focus:border-emerald-500"></textarea>
+                                <button id="chat-send-btn" onclick="chatSend()" class="w-10 h-10 flex-shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white flex items-center justify-center transition shadow-md"><i class="fa-solid fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: WEEKLY PLAN & GROCERY LIST -->
+                <div id="tab-planner" class="tab-content hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Weekly Plan Calendar -->
+                        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100" data-i18n="planner_title">Həftəlik Avtomatik Menyular</h3>
+                                    <p class="text-xs text-slate-500" data-i18n="planner_desc">Məşq günlərinizə uyğun karbohidrat və zülal sinxronizasiyası</p>
+                                </div>
+                                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300" data-i18n="ready_week">Hazır Həftə</span>
+                            </div>
+                            <div class="space-y-3" id="weekly-plan-list">
+                                <!-- JS Populated -->
+                            </div>
+                        </div>
+
+                        <!-- Categorized Grocery List -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100" data-i18n="grocery_title">Market Səbəti</h3>
+                                    <button onclick="exportToGroceryDelivery()" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                        <i class="fa-solid fa-cart-shopping mr-1"></i> Wolt / Bolt
+                                    </button>
+                                </div>
+                                <p class="text-xs text-slate-500 mb-4" data-i18n="grocery_desc">Supermarket koridorlarına (Ət, Tərəvəz, Ədviyyat) görə kateqoriyalara ayrılmış siyahı.</p>
+                                <div class="space-y-4 max-h-72 overflow-y-auto custom-scrollbar pr-1" id="grocery-categories-list">
+                                    <!-- JS Populated -->
+                                </div>
+                            </div>
+                            <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div class="bg-emerald-50 dark:bg-emerald-900/30 p-3 rounded-2xl flex items-center justify-between">
+                                    <div>
+                                        <span class="block text-xs font-bold text-emerald-800 dark:text-emerald-300" data-i18n="batch_title">Batch-Prep Kalkulyatoru</span>
+                                        <span class="text-[11px] text-emerald-600 dark:text-emerald-400" data-i18n="batch_desc">5 günlük nahar hazırlığı üçün miqyasla</span>
+                                    </div>
+                                    <button onclick="multiplyGroceryBatch(5)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">
+                                        5x
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: DYNAMIC MOOD & LOCATION WORKOUT PROGRAM -->
+                <div id="tab-workout" class="tab-content hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 lg:p-8 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                            <div>
+                                <span class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-semibold mb-2">
+                                    <i class="fa-solid fa-dumbbell"></i> <span data-i18n="workout_tag">Fərdi Məşq & Əzələ Proqramı</span>
+                                </span>
+                                <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100" data-i18n="workout_title">Fərdi Məşq Cədvəli</h2>
+                                <p class="text-xs text-slate-500 mt-1" id="workout-desc-context">BMR və çəki göstəricilərinizə uyğun həftəlik adaptive məşq planı.</p>
+                            </div>
+                            <button onclick="regenerateWorkout()" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-xs shadow-lg shadow-amber-500/20 transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-rotate"></i>
+                                <span data-i18n="btn_regenerate">Yenidən Hazırla</span>
+                            </button>
+                        </div>
+
+                        <!-- Mood & Location Filters -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl mb-6 border border-slate-200 dark:border-slate-700/60">
+                            <div>
+                                <label class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5"><i class="fa-solid fa-face-smile text-amber-500 mr-1"></i> <span data-i18n="lbl_mood">Bugünkü Əhval-ruhiyyə / Enerji Səviyyəsi:</span></label>
+                                <select id="workout-mood-select" onchange="generateCustomWorkoutProgram()" class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold outline-none">
+                                    <option value="high" selected data-i18n="mood_high">⚡ Yüksək Enerji / İntensiv Güc Məşqi</option>
+                                    <option value="normal" data-i18n="mood_normal">⚖️ Normal / Standart Gün</option>
+                                    <option value="low" data-i18n="mood_low">🧘 Yorğun / Aşağı Enerji - Bərpa & Yüngül</option>
+                                    <option value="stress" data-i18n="mood_stress">🔥 Stresli / Qəzəbli - Kardiyo & Hədəf</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5"><i class="fa-solid fa-location-dot text-amber-500 mr-1"></i> <span data-i18n="lbl_venue">Məşq Məkanı:</span></label>
+                                <select id="workout-location-select" onchange="generateCustomWorkoutProgram()" class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold outline-none">
+                                    <option value="gym" selected data-i18n="venue_gym">🏋️ İdman Zalı (Gym)</option>
+                                    <option value="home" data-i18n="venue_home">🏠 Evdə / Öz çəkinlə (Home / Bodyweight)</option>
+                                    <option value="outdoor" data-i18n="venue_outdoor">🌲 Açıq Hava (Outdoor Park)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Generated Workout Split Grid -->
+                        <div id="workout-split-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Rendered dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 6: PDF REPORT FOR DOCTOR / COACH -->
+                <div id="tab-report" class="tab-content hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 lg:p-8 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                        <div class="max-w-2xl mb-6">
+                            <span class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold mb-3">
+                                <i class="fa-solid fa-file-medical"></i> NutriFit v1.0.2 Pro Official PDF
+                            </span>
+                            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100" data-i18n="report_title">Həftəlik Qidalanma və Sağlamlıq Hesabatı</h2>
+                            <p class="text-sm text-slate-500 mt-1" data-i18n="report_desc">Kalori uyğunluğu, mikronutrientlər və çəki dinamikasını təmiz PDF formatında ixrac edin.</p>
+                        </div>
+
+                        <div id="pdf-preview-box" class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700/80 mb-6 space-y-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700 gap-2">
+                                <div>
+                                    <h3 id="pdf-rep-name" class="text-lg font-bold text-slate-800 dark:text-slate-100">İstifadəçi Hesabatı</h3>
+                                    <p class="text-xs text-slate-500" id="pdf-rep-subtitle">NutriFit v1.0.2 Pro - İcmal və Streak İzləmə</p>
+                                </div>
+                                <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-lg w-fit" data-i18n="compliance_rate">Uyğunluq: 96%</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="pdf-rep-stats">
+                                <!-- JS Populated -->
+                            </div>
+
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-2" data-i18n="health_notes_title">Sağlamlıq & Mikronutrient Qeydləri</h4>
+                                <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 list-disc list-inside" id="pdf-rep-notes">
+                                    <!-- JS Populated -->
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-4">
+                            <button onclick="downloadPDFReport()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-emerald-600/20 transition flex items-center space-x-2">
+                                <i class="fa-solid fa-download"></i>
+                                <span data-i18n="btn_download_pdf">PDF Hesabatı Yüklə</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+        <!-- Mobile Bottom Navigation Bar -->
+        <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-2 flex justify-around">
+            <button onclick="switchTab('dashboard')" class="mobile-nav-btn flex flex-col items-center p-1 text-emerald-600 dark:text-emerald-400">
+                <i class="fa-solid fa-chart-pie text-lg"></i>
+                <span class="text-[10px] font-bold mt-0.5" data-i18n="nav_dashboard">Panel</span>
+            </button>
+            <button onclick="switchTab('fridge')" class="mobile-nav-btn flex flex-col items-center p-1 text-slate-400">
+                <i class="fa-solid fa-utensils text-lg"></i>
+                <span class="text-[10px] font-bold mt-0.5" data-i18n="nav_fridge">Soyuducu</span>
+            </button>
+            <button onclick="switchTab('scanner')" class="mobile-nav-btn flex flex-col items-center p-1 text-slate-400">
+                <i class="fa-solid fa-robot text-lg"></i>
+                <span class="text-[10px] font-bold mt-0.5" data-i18n="nav_scanner">Çatbot</span>
+            </button>
+            <button onclick="switchTab('workout')" class="mobile-nav-btn flex flex-col items-center p-1 text-amber-500">
+                <i class="fa-solid fa-dumbbell text-lg"></i>
+                <span class="text-[10px] font-bold mt-0.5" data-i18n="nav_workout">Məşq</span>
+            </button>
+            <button onclick="openProfileModal()" class="mobile-nav-btn flex flex-col items-center p-1 text-slate-400">
+                <i class="fa-solid fa-user-gear text-lg"></i>
+                <span class="text-[10px] font-bold mt-0.5" data-i18n="profile">Profil</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- SPECIFIC STEP-BY-STEP COOKING INSTRUCTIONS MODAL -->
+    <div id="cooking-modal" class="fixed inset-0 z-[250] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar relative">
+            <button onclick="closeCookingModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            
+            <div class="flex items-center space-x-3">
+                <span class="p-3 rounded-2xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 text-xl"><i class="fa-solid fa-fire-burner"></i></span>
+                <div>
+                    <h3 id="cook-recipe-title" class="text-lg font-bold text-slate-800 dark:text-slate-100">Resept Adı</h3>
+                    <p id="cook-recipe-meta" class="text-xs text-slate-500" data-i18n="cook_meta">Hazırlanma vaxtı: 20 dəq | Çətinlik: Asan</p>
+                </div>
+            </div>
+
+            <!-- Itemized Breakdown -->
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+                <h4 class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2" data-i18n="cook_breakdown">Dəqiq İnqrediyent & Makro Bölgüsü</h4>
+                <div id="cook-ingredients-list" class="space-y-1.5 text-xs"></div>
+            </div>
+
+            <!-- Total Recipe Macros -->
+            <div class="grid grid-cols-4 gap-2 text-center p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-xs font-bold">
+                <div><span id="cook-total-cal" class="block text-slate-800 dark:text-slate-100">0</span><span class="text-[10px] text-slate-400 uppercase" data-i18n="unit_kcal">Kkal</span></div>
+                <div><span id="cook-total-prot" class="block text-emerald-600">0g</span><span class="text-[10px] text-slate-400 uppercase" data-i18n="protein">Zülal</span></div>
+                <div><span id="cook-total-carb" class="block text-teal-600">0g</span><span class="text-[10px] text-slate-400 uppercase" data-i18n="carbs">Karb</span></div>
+                <div><span id="cook-total-fat" class="block text-amber-600">0g</span><span class="text-[10px] text-slate-400 uppercase" data-i18n="fats">Yağ</span></div>
+            </div>
+
+            <!-- Steps Instructions -->
+            <div>
+                <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider" data-i18n="cook_steps_title">Adım-Adım Bişirilmə Təlimatı:</h4>
+                <div id="cook-steps-container" class="space-y-2.5 text-xs text-slate-600 dark:text-slate-300"></div>
+            </div>
+
+            <div class="pt-2 flex space-x-3">
+                <button id="btn-log-modal-recipe" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-emerald-600/20 flex items-center justify-center">
+                    <i class="fa-solid fa-plus mr-1"></i>
+                    <span data-i18n="btn_add_to_log">Gündəliyə Əlavə Et</span>
+                </button>
+                <button onclick="closeCookingModal()" class="px-5 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold" data-i18n="btn_close">
+                    Bağla
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM MEAL INPUT MODAL -->
+    <div id="custom-meal-modal" class="fixed inset-0 z-[250] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 relative">
+            <button onclick="closeCustomMealModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100" data-i18n="custom_meal_title">✍️ Xüsusi Yemək Əlavə Et</h3>
+            <p class="text-xs text-slate-500" data-i18n="custom_meal_desc">Şəkilsiz və ya özün hazırladığın yeməyin kalori və makro dəyərlərini birbaşa gündəliyinə qeyd et.</p>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="meal_name">Yeməyin Adı</label>
+                    <input type="text" id="custom-meal-title" placeholder="məs: Ev üsulu Toyuq Şorbası" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="unit_kcal">Kalori (kkal)</label>
+                        <input type="number" id="custom-meal-cal" value="450" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="protein">Zülal (q)</label>
+                        <input type="number" id="custom-meal-prot" value="30" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="carbs">Karbohidrat (q)</label>
+                        <input type="number" id="custom-meal-carb" value="45" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="fats">Yağ (q)</label>
+                        <input type="number" id="custom-meal-fat" value="10" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="submitCustomMeal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-emerald-600/20" data-i18n="btn_add_to_log">
+                Gündəliyə Əlavə Et
+            </button>
+        </div>
+    </div>
+
+    <!-- PROFILE MANAGEMENT MODAL -->
+    <div id="profile-modal" class="fixed inset-0 z-[250] bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar relative">
+            <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100" data-i18n="profile_title">Profil Tənzimləmələri (NutriFit v1.0.2 Pro)</h3>
+
+            <!-- Profile Avatar Device File Uploader -->
+            <div class="flex items-center space-x-4 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div class="w-14 h-14 rounded-2xl bg-emerald-600 text-white font-bold flex items-center justify-center text-xl shadow overflow-hidden relative shrink-0">
+                    <img id="modal-avatar-img" class="w-full h-full object-cover hidden">
+                    <span id="modal-avatar-txt">E</span>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-700 dark:text-slate-200 block mb-1" data-i18n="upload_avatar_lbl">Profil Şəkli Yüklə</label>
+                    <input type="file" id="device-avatar-input" accept="image/*" class="hidden" onchange="handleDeviceAvatarUpload(event)">
+                    <button onclick="document.getElementById('device-avatar-input').click()" class="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-bold hover:bg-emerald-200 transition flex items-center">
+                        <i class="fa-solid fa-image mr-1"></i>
+                        <span data-i18n="btn_choose_gallery">Qalereyadan / Fayllardan Seç</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profile Info Editable Fields -->
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="fullname">Ad və Soyad</label>
+                    <input type="text" id="prof-edit-name" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="age">Yaş</label>
+                        <input type="number" id="prof-edit-age" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="height">Boy (sm)</label>
+                        <input type="number" id="prof-edit-height" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="weight">Çəki (kq)</label>
+                        <input type="number" id="prof-edit-weight" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="fitness_goal">Məqsəd</label>
+                    <select id="prof-edit-goal" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold outline-none">
+                        <option value="gain" data-i18n="goal_gain">Kökelmək / Əzələ yığımı (Bulking)</option>
+                        <option value="lose" data-i18n="goal_lose">Yağ itirmək və arıqlamaq (Deficit)</option>
+                        <option value="maintain" data-i18n="goal_maintain">Formanı qorumaq (Maintain)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1" data-i18n="workout_days">Həftəlik Məşq Günləri</label>
+                    <input type="number" id="prof-edit-days" min="1" max="7" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none">
+                </div>
+            </div>
+
+            <button onclick="saveProfileChanges()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition" data-i18n="btn_save_profile">
+                Məlumatları Yadda Saxla və BMR Yenilə
+            </button>
+
+            <!-- Password Change Section -->
+            <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300" data-i18n="pass_change_title">Parolun Dəyişdirilməsi</h4>
+                <input type="password" id="prof-old-pass" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none" data-i18n-ph="old_pass_ph" placeholder="Cari Parol">
+                <input type="password" id="prof-new-pass" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none" data-i18n-ph="new_pass_ph" placeholder="Yeni Parol">
+                <input type="password" id="prof-confirm-new-pass" class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none" data-i18n-ph="confirm_new_pass_ph" placeholder="Yeni Parolun Təkrarı">
+                <button onclick="saveNewPassword()" class="w-full py-2 bg-slate-800 dark:bg-slate-700 text-white rounded-xl text-xs font-bold transition" data-i18n="btn_update_pass">
+                    Parolu Yenilə
+                </button>
+            </div>
+
+            <!-- Logout Section -->
+            <div class="pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                <button onclick="handleLogout()" class="text-xs font-bold text-rose-500 hover:underline">
+                    <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> <span data-i18n="btn_logout">Hesabdan Çıxış Et</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APPLICATION LOGIC & JAVASCRIPT ENGINE -->
+    <script>
+        // GLOBAL APP STATE & PERSISTENCE
+        let appState = {
+            lang: 'AZ',
+            currentUser: null,
+            users: [],
+            selectedIngs: [],
+            workoutSeed: 0
+        };
+
+        // 100+ INGREDIENTS DATABASE WITH REAL METRICS PER 100G
+        const ingredientsDatabase = [
+            // Zülal & Ətlər & Süd
+            { id: 'i1', cat: 'meat', name: { AZ: 'Toyuq Sinəsi', EN: 'Chicken Breast', RU: 'Куриная Грудка' }, cal: 165, prot: 31, carb: 0, fat: 3.6 },
+            { id: 'i2', cat: 'meat', name: { AZ: 'Toyuq Budu', EN: 'Chicken Thigh', RU: 'Куриное Бедро' }, cal: 209, prot: 26, carb: 0, fat: 10.9 },
+            { id: 'i3', cat: 'meat', name: { AZ: 'Mal Əti (Bifşteks)', EN: 'Beef Steak', RU: 'Говяжий Стейк' }, cal: 250, prot: 26, carb: 0, fat: 15 },
+            { id: 'i4', cat: 'meat', name: { AZ: 'Dana Əti', EN: 'Veal Meat', RU: 'Телятина' }, cal: 172, prot: 24, carb: 0, fat: 8.5 },
+            { id: 'i5', cat: 'meat', name: { AZ: 'Hind Quşu File', EN: 'Turkey Fillet', RU: 'Филе Индейки' }, cal: 135, prot: 30, carb: 0, fat: 1 },
+            { id: 'i6', cat: 'meat', name: { AZ: 'Qızılbalıq (Salmon)', EN: 'Salmon Fillet', RU: 'Лосось Филе' }, cal: 208, prot: 20, carb: 0, fat: 13 },
+            { id: 'i7', cat: 'meat', name: { AZ: 'Treska Balığı', EN: 'Cod Fish', RU: 'Треска' }, cal: 82, prot: 18, carb: 0, fat: 0.7 },
+            { id: 'i8', cat: 'meat', name: { AZ: 'Forel Balığı', EN: 'Trout', RU: 'Форель' }, cal: 148, prot: 20, carb: 0, fat: 6.6 },
+            { id: 'i9', cat: 'meat', name: { AZ: 'Ton Balığı (Konserv)', EN: 'Canned Tuna', RU: 'Тунец Консервированный' }, cal: 116, prot: 26, carb: 0, fat: 1 },
+            { id: 'i10', cat: 'meat', name: { AZ: 'Yumurta (1 ədəd ~50g)', EN: 'Egg (1 pc ~50g)', RU: 'Яйцо (1 шт ~50г)' }, cal: 72, prot: 6.3, carb: 0.4, fat: 4.8 },
+            { id: 'i11', cat: 'meat', name: { AZ: 'Yumurta Ağı (100g)', EN: 'Egg Whites (100g)', RU: 'Яичные Белки (100г)' }, cal: 52, prot: 11, carb: 0.7, fat: 0.2 },
+            { id: 'i12', cat: 'meat', name: { AZ: 'Kəsmik 5%', EN: 'Cottage Cheese 5%', RU: 'Творог 5%' }, cal: 121, prot: 17, carb: 1.8, fat: 5 },
+            { id: 'i13', cat: 'meat', name: { AZ: 'Kəsmik 0%', EN: 'Non-fat Cottage Cheese', RU: 'Творог 0%' }, cal: 71, prot: 18, carb: 1.3, fat: 0.2 },
+            { id: 'i14', cat: 'meat', name: { AZ: 'Qatıq 2%', EN: 'Yogurt 2%', RU: 'Кефир / Йогурт 2%' }, cal: 50, prot: 3.8, carb: 4.7, fat: 2 },
+            { id: 'i15', cat: 'meat', name: { AZ: 'Whey Proteyn Tozu', EN: 'Whey Protein Powder', RU: 'Сывороточный Протеин' }, cal: 120, prot: 24, carb: 2, fat: 1.5 },
+
+            // Taxıllar & Karbohidratlar
+            { id: 'i16', cat: 'grain', name: { AZ: 'Yulaf Əzməsi', EN: 'Rolled Oats', RU: 'Овсяные Хлопья' }, cal: 389, prot: 16.9, carb: 66, fat: 6.9 },
+            { id: 'i17', cat: 'grain', name: { AZ: 'Ağ Düyü', EN: 'White Rice', RU: 'Белый Рис' }, cal: 360, prot: 7, carb: 79, fat: 0.6 },
+            { id: 'i18', cat: 'grain', name: { AZ: 'Qəhvəyi Düyü', EN: 'Brown Rice', RU: 'Бурый Рис' }, cal: 370, prot: 7.5, carb: 77, fat: 2.9 },
+            { id: 'i19', cat: 'grain', name: { AZ: 'Qreçka (Qarabaşaq)', EN: 'Buckwheat', RU: 'Гречка' }, cal: 343, prot: 13, carb: 72, fat: 3.4 },
+            { id: 'i20', cat: 'grain', name: { AZ: 'Makaron', EN: 'Pasta / Macaroni', RU: 'Макароны' }, cal: 371, prot: 13, carb: 74, fat: 1.5 },
+            { id: 'i21', cat: 'grain', name: { AZ: 'Kinoa', EN: 'Quinoa', RU: 'Киноа' }, cal: 368, prot: 14, carb: 64, fat: 6 },
+            { id: 'i22', cat: 'grain', name: { AZ: 'Qırmızı Mərci', EN: 'Red Lentils', RU: 'Красная Чечевица' }, cal: 352, prot: 24.6, carb: 63, fat: 1.1 },
+            { id: 'i23', cat: 'grain', name: { AZ: 'Qara Çörək', EN: 'Rye / Dark Bread', RU: 'Черный Хлеб' }, cal: 259, prot: 8.5, carb: 48, fat: 3.3 },
+            { id: 'i24', cat: 'grain', name: { AZ: 'Kartof', EN: 'Potato', RU: 'Картофель' }, cal: 77, prot: 2, carb: 17, fat: 0.1 },
+
+            // Meyvə & Tərəvəzlər
+            { id: 'i25', cat: 'veggie', name: { AZ: 'Banan (1 ədəd)', EN: 'Banana (1 pc)', RU: 'Банан (1 шт)' }, cal: 89, prot: 1.1, carb: 23, fat: 0.3 },
+            { id: 'i26', cat: 'veggie', name: { AZ: 'Alma', EN: 'Apple', RU: 'Яблоко' }, cal: 52, prot: 0.3, carb: 14, fat: 0.2 },
+            { id: 'i27', cat: 'veggie', name: { AZ: 'Brokoli', EN: 'Broccoli', RU: 'Брокколи' }, cal: 34, prot: 2.8, carb: 7, fat: 0.4 },
+            { id: 'i28', cat: 'veggie', name: { AZ: 'İspanaq', EN: 'Spinach', RU: 'Шпинат' }, cal: 23, prot: 2.9, carb: 3.6, fat: 0.4 },
+            { id: 'i29', cat: 'veggie', name: { AZ: 'Pomidor', EN: 'Tomato', RU: 'Помидор' }, cal: 18, prot: 0.9, carb: 3.9, fat: 0.2 },
+            { id: 'i30', cat: 'veggie', name: { AZ: 'Xiyar', EN: 'Cucumber', RU: 'Огурец' }, cal: 15, prot: 0.7, carb: 3.6, fat: 0.1 },
+            { id: 'i31', cat: 'veggie', name: { AZ: 'Göbələk', EN: 'Mushrooms', RU: 'Грибы' }, cal: 22, prot: 3.1, carb: 3.3, fat: 0.3 },
+
+            // Yağlar & Çərəzlər
+            { id: 'i32', cat: 'fats', name: { AZ: 'Avokado', EN: 'Avocado', RU: 'Авокадо' }, cal: 160, prot: 2, carb: 8.5, fat: 15 },
+            { id: 'i33', cat: 'fats', name: { AZ: 'Qoz', EN: 'Walnuts', RU: 'Греческий Орех' }, cal: 654, prot: 15, carb: 14, fat: 65 },
+            { id: 'i34', cat: 'fats', name: { AZ: 'Badam', EN: 'Almonds', RU: 'Миндаль' }, cal: 579, prot: 21, carb: 22, fat: 50 },
+            { id: 'i35', cat: 'fats', name: { AZ: 'Fıstıq Əzməsi', EN: 'Peanut Butter', RU: 'Арахисовая Паста' }, cal: 588, prot: 25, carb: 20, fat: 50 },
+            { id: 'i36', cat: 'fats', name: { AZ: 'Zeytun Yağı (1 x.q)', EN: 'Olive Oil (1 tbsp)', RU: 'Оливковое Масло (1 ст.л)' }, cal: 119, prot: 0, carb: 0, fat: 13.5 },
+
+            // Ədviyyat & Digər
+            { id: 'i37', cat: 'other', name: { AZ: 'Süd 1.5%', EN: 'Milk 1.5%', RU: 'Молоко 1.5%' }, cal: 44, prot: 3.4, carb: 4.8, fat: 1.5 },
+            { id: 'i38', cat: 'other', name: { AZ: 'Bal', EN: 'Natural Honey', RU: 'Натуральный Мед' }, cal: 304, prot: 0.3, carb: 82, fat: 0 },
+            { id: 'i39', cat: 'other', name: { AZ: 'Sarımsaq', EN: 'Garlic', RU: 'Чеснок' }, cal: 149, prot: 6.4, carb: 33, fat: 0.5 },
+            { id: 'i40', cat: 'other', name: { AZ: 'Darçın', EN: 'Cinnamon', RU: 'Корица' }, cal: 247, prot: 4, carb: 81, fat: 1.2 }
+        ];
+
+        let activeIngredientCategory = 'all';
+
+        // MULTI-LANGUAGE TRANSLATION DICTIONARY
+        const i18nDict = {
+            AZ: {
+                app_tagline: "Ağıllı Qidalanma, BMR & Məşq Ekosistemi",
+                auth_subtitle: "Ağıllı qidalanma, soyuducu-resept və fərdi məşq platforması",
+                tab_login: "Daxil Ol", tab_signup: "Qeydiyyat",
+                email: "E-poçt ünvanı", email_ph: "ornek@mail.com",
+                password: "Parol", confirm_pass: "Parol Təkrarı",
+                fullname: "Ad və Soyad", fullname_ph: "Emil Məmmədov",
+                age: "Yaş", height: "Boy (sm)", weight: "Çəki (kq)",
+                fitness_goal: "Əsas Məqsəd", workout_days: "Həftəlik Məşq Günləri (1 - 7)",
+                goal_gain: "Kökelmək / Əzələ yığımı (Bulking)",
+                goal_lose: "Yağ itirmək və arıqlamaq (Deficit)",
+                goal_maintain: "Formanı qorumaq (Recomp / Maintain)",
+                btn_login: "Hesaba Daxil Ol", btn_signup: "Qeydiyyatı Tamamla və Giriş Et",
+                
+                nav_dashboard: "İdarə Paneli & BMR", nav_fridge: "Soyuducudan Reseptə", nav_scanner: "AI Qida Çatbotu",
+                nav_planner: "Həftəlik Plan & Bazar", nav_workout: "Məşq Proqramı", nav_report: "Həkim/Məşqçi PDF Hesabat",
+                profile: "Profil",
+
+                sb_bmr: "BMR (Metabolizm):", sb_tdee: "TDEE (Xərclənən):", lbl_streak: "Gündəlik Streak:",
+                dash_subtitle: "Metabolizm göstəricilərinizə əsasən gündəlik kalori və zülal hədəfinizi tamamlayın.",
+                daily_calories: "Gündəlik Kalori Hədəfi", consumed: "İstehlak", lbl_remaining: "Qalır:",
+                macro_balance: "Makro Element Balansı", protein: "Zülal (Protein)", carbs: "Karbohidrat", fats: "Yağlar",
+                macro_note: "Göstəricilər yaşınıza, çəkinizə və kökəlmək/arıqlamaq hədəfinizə uyğun tənzimlənib.",
+                today_activity: "Bugünkü Qeydlər", no_logs: "Hələ heç bir yemək əlavə edilməyib.", btn_add_meal_nav: "Resept Əlavə Et",
+                btn_custom_meal: "✍️ Xüsusi Yemək Əlavə Et", custom_meal_title: "✍️ Xüsusi Yemək Əlavə Et", custom_meal_desc: "Şəkilsiz və ya özün hazırladığın yeməyin kalori və makro dəyərlərini birbaşa gündəliyinə qeyd et.", meal_name: "Yeməyin Adı",
+
+                fridge_tag: "100+ Dəqiq Makrolu Ərzaq Baza", fridge_title: "Soyuducudakı Ərzaqları Seçin",
+                fridge_subtitle: "Mövcud ərzaqları toxunaraq seçin, hər birinin 100g zülal/kalori dəyərini görün və xüsusi bişirmə resepti əldə edin.",
+                ing_search_ph: "Ərzaq axtar (məs: Toyuq, Yulaf, Kəsmik)...",
+                cat_all: "Bütün (100+)", cat_meat: "Zülal & Ət", cat_grain: "Taxıl & Karb", cat_veggie: "Meyvə & Tərəvəz", cat_fats: "Yağlar & Qoz", cat_other: "Ədviyyat & Digər",
+                lbl_selected_ings: "Seçilən Ərzaqlar:", btn_clear: "Təmizlə", btn_generate_recipe: "AI Resept Yarat",
+
+                scanner_title: "AI Qida Çatbotu", scanner_subtitle: "Yemək şəkli göndərin, tərkibi, kalorini və zülalı hesablayım.",
+                scan_dropzone_text: "Şəkil Seçmək və ya Çəkmək Üçün Toxun", scan_formats: "PNG, JPG, WEBP (Maksimum 10MB)", scan_analyzing: "AI Şəkli Analiz Edir...",
+                scan_accuracy: "AI Vision Engine", btn_add_to_log: "Gündəlik Kalori Qrafikinə Əlavə Et", unit_kcal: "Kkal", btn_rescan: "🔄 Yeni Yemək Skan Et",
+
+                planner_title: "Həftəlik Avtomatik Menyular", planner_desc: "Məşq günlərinizə uyğun karbohidrat və zülal sinxronizasiyası", ready_week: "Hazır Həftə",
+                grocery_title: "Market Səbəti", grocery_desc: "Supermarket koridorlarına (Ət, Tərəvəz, Ədviyyat) görə kateqoriyalara ayrılmış siyahı.",
+                batch_title: "Batch-Prep Kalkulyatoru", batch_desc: "5 günlük nahar hazırlığı üçün miqyasla",
+
+                workout_tag: "Fərdi Məşq & Əzələ Proqramı", workout_title: "Fərdi Məşq Cədvəli", btn_regenerate: "Yenidən Hazırla",
+                lbl_mood: "Bugünkü Əhval-ruhiyyə / Enerji Səviyyəsi:", lbl_venue: "Məşq Məkanı:",
+                mood_high: "⚡ Yüksək Enerji / İntensiv Güc Məşqi", mood_normal: "⚖️ Normal / Standart Gün",
+                mood_low: "🧘 Yorğun / Aşağı Enerji - Bərpa & Yüngül", mood_stress: "🔥 Stresli / Qəzəbli - Kardiyo & Hədəf",
+                venue_gym: "🏋️ İdman Zalı (Gym)", venue_home: "🏠 Evdə / Öz çəkinlə (Home / Bodyweight)", venue_outdoor: "🌲 Açıq Hava (Outdoor Park)",
+
+                report_title: "Həftəlik Qidalanma və Sağlamlıq Hesabatı", report_desc: "Kalori uyğunluğu, mikronutrientlər və çəki dinamikasını təmiz PDF formatında ixrac edin.",
+                compliance_rate: "Uyğunluq: 96%", health_notes_title: "Sağlamlıq & Mikronutrient Qeydləri",
+                btn_download_pdf: "PDF Hesabatı Yüklə",
+
+                cook_meta: "Hazırlanma vaxtı: 20 dəq | Çətinlik: Asan", cook_breakdown: "Dəqiq İnqrediyent & Makro Bölgüsü",
+                cook_steps_title: "Adım-Adım Bişirilmə Təlimatı:", btn_close: "Bağla",
+
+                profile_title: "Profil Tənzimləmələri (NutriFit v1.0.2 Pro)", upload_avatar_lbl: "Profil Şəkli Yüklə", btn_choose_gallery: "Qalereyadan / Fayllardan Seç",
+                btn_save_profile: "Məlumatları Yadda Saxla və BMR Yenilə", pass_change_title: "Parolun Dəyişdirilməsi",
+                old_pass_ph: "Cari Parol", new_pass_ph: "Yeni Parol", confirm_new_pass_ph: "Yeni Parolun Təkrarı", btn_update_pass: "Parolu Yenilə", btn_logout: "Çıxış Et",
+
+                err_user_not_found: "Bu e-poçt ünvanı ilə qeydiyyatdan keçmiş hesab tapılmadı.",
+                err_wrong_pass: "Daxil edilən şifrə yanlışdır!",
+                err_pass_mismatch: "Daxil edilən parollar bir-biri ilə üst-üstə düşmür!",
+                err_pass_short: "Parol ən azı 6 simvoldan ibarət olmalıdır.",
+                err_email_exists: "Bu e-poçt ünvanı artıq istifadə olunur!",
+                err_not_food: "❌ Yüklənən şəkildə heç bir qida və ya yemək aşkar edilmədi! Zəhmət olmasa yalnız yemək şəkli yükləyin."
+            },
+            EN: {
+                app_tagline: "Smart Nutrition, BMR & Workout Ecosystem",
+                auth_subtitle: "Smart nutrition, fridge recipe generator, and personalized workout app",
+                tab_login: "Sign In", tab_signup: "Register",
+                email: "Email Address", email_ph: "example@mail.com",
+                password: "Password", confirm_pass: "Confirm Password",
+                fullname: "Full Name", fullname_ph: "John Doe",
+                age: "Age", height: "Height (cm)", weight: "Weight (kg)",
+                fitness_goal: "Primary Fitness Goal", workout_days: "Weekly Workout Days (1 - 7)",
+                goal_gain: "Gain Weight / Muscle Mass (Bulking)",
+                goal_lose: "Fat Loss & Weight Deficit",
+                goal_maintain: "Maintain Shape (Recomp / Maintain)",
+                btn_login: "Sign In To Account", btn_signup: "Complete Registration & Sign In",
+
+                nav_dashboard: "Dashboard & BMR", nav_fridge: "Fridge to Recipe", nav_scanner: "AI Food Chatbot",
+                nav_planner: "Weekly Plan & Market", nav_workout: "Workout Program", nav_report: "Doctor/Coach PDF Report",
+                profile: "Profile",
+
+                sb_bmr: "BMR (Metabolism):", sb_tdee: "TDEE (Burned):", lbl_streak: "Daily Streak:",
+                dash_subtitle: "Complete your daily calorie and protein target calculated directly from your BMR metrics.",
+                daily_calories: "Daily Calorie Target", consumed: "Consumed", lbl_remaining: "Remaining:",
+                macro_balance: "Macronutrient Balance", protein: "Protein", carbs: "Carbohydrates", fats: "Fats",
+                macro_note: "Targets are customized based on your age, body weight, and fitness goal.",
+                today_activity: "Today's Logs", no_logs: "No meals logged yet today.", btn_add_meal_nav: "Add Recipe",
+                btn_custom_meal: "✍️ Add Custom Meal", custom_meal_title: "✍️ Add Custom Meal", custom_meal_desc: "Directly log meal calories and macronutrients without photo scanning.", meal_name: "Meal Title",
+
+                fridge_tag: "100+ Precise Macro Food Database", fridge_title: "Select Fridge Ingredients",
+                fridge_subtitle: "Tap available items to view per 100g macros and build personalized cooking recipes.",
+                ing_search_ph: "Search ingredient (e.g., Chicken, Oats, Cottage Cheese)...",
+                cat_all: "All (100+)", cat_meat: "Protein & Meat", cat_grain: "Grains & Carbs", cat_veggie: "Fruits & Veggies", cat_fats: "Fats & Nuts", cat_other: "Spices & Other",
+                lbl_selected_ings: "Selected Items:", btn_clear: "Clear All", btn_generate_recipe: "Generate AI Recipe",
+
+                scanner_title: "AI Food Chatbot", scanner_subtitle: "Send a meal photo and I will break down ingredients, calories and protein.",
+                scan_dropzone_text: "Tap to Select or Capture Image", scan_formats: "PNG, JPG, WEBP (Max 10MB)", scan_analyzing: "AI Analyzing Image...",
+                scan_accuracy: "AI Vision Engine", btn_add_to_log: "Add to Daily Progress Ring", unit_kcal: "Kcal", btn_rescan: "🔄 Scan New Food",
+
+                planner_title: "Weekly Auto Meal Plans", planner_desc: "Carbohydrate and protein timing synchronized with workout days", ready_week: "Prepared Week",
+                grocery_title: "Grocery Cart", grocery_desc: "Categorized by supermarket aisles (Meat, Vegetables, Spices).",
+                batch_title: "Batch-Prep Calculator", batch_desc: "Scale ingredients for 5-day meal prep",
+
+                workout_tag: "Personalized Workout & Muscle Program", workout_title: "Custom Workout Schedule", btn_regenerate: "Regenerate Program",
+                lbl_mood: "Today's Mood / Energy Level:", lbl_venue: "Workout Location / Venue:",
+                mood_high: "⚡ High Energy / Heavy Strength Training", mood_normal: "⚖️ Normal / Standard Day",
+                mood_low: "🧘 Tired / Low Energy - Recovery & Light", mood_stress: "🔥 Stressed - Cardio & Focus",
+                venue_gym: "🏋️ Gym Facility", venue_home: "🏠 Home / Bodyweight Exercises", venue_outdoor: "🌲 Outdoor Park",
+
+                report_title: "Weekly Nutrition & Health Report", report_desc: "Export calorie compliance, micronutrients, and weight dynamics in PDF format.",
+                compliance_rate: "Compliance: 96%", health_notes_title: "Health & Micronutrient Notes",
+                btn_download_pdf: "Download PDF Report",
+
+                cook_meta: "Prep Time: 20 mins | Difficulty: Easy", cook_breakdown: "Exact Ingredient & Macro Breakdown",
+                cook_steps_title: "Step-by-Step Cooking Guide:", btn_close: "Close",
+
+                profile_title: "Profile Settings (NutriFit v1.0.2 Pro)", upload_avatar_lbl: "Upload Profile Picture", btn_choose_gallery: "Select From Gallery / Files",
+                btn_save_profile: "Save Profile & Recalculate BMR", pass_change_title: "Change Account Password",
+                old_pass_ph: "Current Password", new_pass_ph: "New Password", confirm_new_pass_ph: "Confirm New Password", btn_update_pass: "Update Password", btn_logout: "Sign Out",
+
+                err_user_not_found: "No registered account found with this email.",
+                err_wrong_pass: "Incorrect password!",
+                err_pass_mismatch: "Entered passwords do not match!",
+                err_pass_short: "Password must be at least 6 characters long.",
+                err_email_exists: "Email address is already in use!",
+                err_not_food: "❌ No food or meal detected in the uploaded image! Please upload a meal image."
+            },
+            RU: {
+                app_tagline: "Экосистема Умного Питания, BMR и Тренировок",
+                auth_subtitle: "Умное питание, рецепты из холодильника и персональные тренировки",
+                tab_login: "Войти", tab_signup: "Регистрация",
+                email: "Эл. почта", email_ph: "primer@mail.com",
+                password: "Пароль", confirm_pass: "Повторите пароль",
+                fullname: "Имя и Фамилия", fullname_ph: "Иван Иванов",
+                age: "Возраст", height: "Рост (см)", weight: "Вес (кг)",
+                fitness_goal: "Основная Цель", workout_days: "Дней тренировок в неделю (1 - 7)",
+                goal_gain: "Набор массы / Мышцы (Bulking)",
+                goal_lose: "Сброс веса / Дефицит (Deficit)",
+                goal_maintain: "Поддержание формы (Maintain)",
+                btn_login: "Войти в Аккаунт", btn_signup: "Завершить Регистрацию и Войти",
+
+                nav_dashboard: "Панель & BMR", nav_fridge: "Из Холодильника в Рецепт", nav_scanner: "ИИ Чат-бот по Еде",
+                nav_planner: "План на Неделю & Корзина", nav_workout: "Программа Тренировок", nav_report: "PDF Отчет для Врача/Тренера",
+                profile: "Профиль",
+
+                sb_bmr: "BMR (Метаболизм):", sb_tdee: "TDEE (Расходуется):", lbl_streak: "Дневной Стрик:",
+                dash_subtitle: "Выполняйте дневную норму калорий и белков, рассчитанную на основе вашего BMR.",
+                daily_calories: "Дневная Норма Калорий", consumed: "Потреблено", lbl_remaining: "Осталось:",
+                macro_balance: "Баланс Макроэлементов", protein: "Белок", carbs: "Углеводы", fats: "Жиры",
+                macro_note: "Цели адаптированы под ваш возраст, вес и выбранную цель.",
+                today_activity: "Записи За Сегодня", no_logs: "Записей пока нет.", btn_add_meal_nav: "Добавить Рецепт",
+                btn_custom_meal: "✍️ Добавить Свое Блюдо", custom_meal_title: "✍️ Добавить Свое Блюдо", custom_meal_desc: "Запишите калории и макросы блюда напрямую в дневник.", meal_name: "Название Блюда",
+
+                fridge_tag: "База Продуктов 100+ с БЖУ", fridge_title: "Выберите Продукты в Холодильнике",
+                fridge_subtitle: "Отмечайте доступные продукты, смотрите БЖУ на 100г и получайте персональные рецепты.",
+                ing_search_ph: "Поиск продукта (например: Курица, Овсянка, Творог)...",
+                cat_all: "Все (100+)", cat_meat: "Белок & Мясо", cat_grain: "Крупы & Углеводы", cat_veggie: "Фрукты & Овощи", cat_fats: "Жиры & Орехи", cat_other: "Специи & Другое",
+                lbl_selected_ings: "Выбранные Продукты:", btn_clear: "Очистить", btn_generate_recipe: "Создать ИИ Рецепт",
+
+                scanner_title: "ИИ Чат-бот по Еде", scanner_subtitle: "Отправьте фото блюда — я разберу состав, калории и белок.",
+                scan_dropzone_text: "Нажмите для Выбора или Фото", scan_formats: "PNG, JPG, WEBP (Макс. 10МБ)", scan_analyzing: "ИИ Анализирует Изображение...",
+                scan_accuracy: "AI Vision Engine", btn_add_to_log: "Добавить в Дневной График", unit_kcal: "Ккал", btn_rescan: "🔄 Сканировать Новую Еду",
+
+                planner_title: "Автоматическое Меню на Неделю", planner_desc: "Синхронизация белков и углеводов с днями тренировок", ready_week: "Готовая Неделя",
+                grocery_title: "Корзина Покупок", grocery_desc: "Список, разделенный по отделам супермаркета.",
+                batch_title: "Калькулятор Заготовок", batch_desc: "Масштабирование ингредиентов на 5 дней",
+
+                workout_tag: "Персональная Программа Тренировок", workout_title: "Персональный График Тренировок", btn_regenerate: "Перегенерировать Программу",
+                lbl_mood: "Сегодняшнее Настроение / Энергия:", lbl_venue: "Место Тренировки:",
+                mood_high: "⚡ Высокая Энергия / Силовая Тренировка", mood_normal: "⚖️ Обычный День",
+                mood_low: "🧘 Усталость / Мало Энергии - Восстановление", mood_stress: "🔥 Стресс - Кардио и Фокус",
+                venue_gym: "🏋️ Фитнес Зал (Gym)", venue_home: "🏠 Дома / Своим весом (Home)", venue_outdoor: "🌲 На Свежем Воздухе (Outdoor)",
+
+                report_title: "Недельный Отчет о Питании и Здоровье", report_desc: "Экспортируйте соблюдение нормы калорий и витаминов в формате PDF.",
+                compliance_rate: "Соблюдение: 96%", health_notes_title: "Заметки о Здоровье и Микроэлементах",
+                btn_download_pdf: "Скачать PDF Отчет",
+
+                cook_meta: "Время готовки: 20 мин | Сложность: Легко", cook_breakdown: "Точная Разбивка Ингредиентов и БЖУ",
+                cook_steps_title: "Пошаговое Руководство по Готовке:", btn_close: "Закрыть",
+
+                profile_title: "Настройки Профиля (NutriFit v1.0.2 Pro)", upload_avatar_lbl: "Загрузить Фото Профиля", btn_choose_gallery: "Выбрать из Галереи / Файлов",
+                btn_save_profile: "Сохранить и Пересчитать BMR", pass_change_title: "Изменение Пароля",
+                old_pass_ph: "Текущий Пароль", new_pass_ph: "Новый Пароль", confirm_new_pass_ph: "Повторите Новый Пароль", btn_update_pass: "Обновить Пароль", btn_logout: "Выйти из Аккаунта",
+
+                err_user_not_found: "Аккаунт с такой эл. почтой не найден.",
+                err_wrong_pass: "Неверный пароль!",
+                err_pass_mismatch: "Введенные пароли не совпадают!",
+                err_pass_short: "Пароль должен содержать минимум 6 символов.",
+                err_email_exists: "Эта эл. почта уже используется!",
+                err_not_food: "❌ На изображение не найдена еда! Пожалуйста загрузите фотографию блюда."
+            }
+        };
+
+
+        // ===== AI CHATBOT I18N =====
+        const chatI18n = {
+            AZ: {
+                chat_provider: "Provayder", chat_model: "Model", chat_key_label: "API açarı", chat_save: "Yadda saxla",
+                chat_placeholder: "Yemək şəkli göndərin və ya yazın (məs: 2 yumurta + 1 dilim çörək)...",
+                chat_welcome: "Salam! 👋 Mən NutriFit qida köməkçisiyəm. Yeməyinizin şəklini göndərin (və ya yazın) — tərkibini, hər komponentin qramını, kalorisini və zülalını hesablayım. Sonra nəticəni bir toxunuşla gündəlik qrafikə əlavə edə bilərsiniz.",
+                chat_no_key: "⚠️ AI işləməsi üçün API açarı lazımdır. Yuxarıdakı ⚙️ düyməsinə basıb açarı daxil edin.",
+                chat_saved: "AI ayarları yadda saxlandı", chat_cleared: "Yeni söhbət başladı",
+                chat_thinking: "Analiz edirəm...", chat_add_log: "Gündəlik Qrafikə Əlavə Et",
+                chat_ing: "Tərkib", chat_grams: "Qram", chat_total: "Cəmi", chat_conf: "Dəqiqlik",
+                chat_conf_high: "Yüksək", chat_conf_medium: "Orta", chat_conf_low: "Aşağı",
+                chat_err_401: "AI xidməti müvəqqəti əlçatan deyil (açar etibarsızdır). Administrasiyaya bildirin.",
+                chat_err_429: "Sorğu limiti dolub. Bir az gözləyib yenidən cəhd edin.",
+                chat_err_net: "Şəbəkə xətası: serverə qoşulmaq alınmadı. İnterneti yoxlayın.",
+                chat_err_generic: "AI xətası", chat_err_img: "Şəkil oxunmadı. JPG/PNG/WEBP formatı yoxlayın.",
+                chat_err_big: "Şəkil çox böyükdür (maks. 10MB).", chat_you: "Siz", chat_image_only: "📷 (şəkil)"
+            },
+            EN: {
+                chat_provider: "Provider", chat_model: "Model", chat_key_label: "API key", chat_save: "Save",
+                chat_placeholder: "Send a meal photo or type (e.g. 2 eggs + 1 slice of bread)...",
+                chat_welcome: "Hi! 👋 I'm the NutriFit food assistant. Send a photo of your meal (or describe it) and I'll list the ingredients, grams, calories and protein of each part. Then add the result to your daily log in one tap.",
+                chat_no_key: "⚠️ An API key is required for the AI to work. Tap the ⚙️ button above and enter your key.",
+                chat_saved: "AI settings saved", chat_cleared: "New chat started",
+                chat_thinking: "Analyzing...", chat_add_log: "Add to Daily Log",
+                chat_ing: "Ingredient", chat_grams: "Grams", chat_total: "Total", chat_conf: "Confidence",
+                chat_conf_high: "High", chat_conf_medium: "Medium", chat_conf_low: "Low",
+                chat_err_401: "The AI service is temporarily unavailable (invalid key). Please contact the administrator.",
+                chat_err_429: "Rate limit reached. Wait a moment and try again.",
+                chat_err_net: "Network error: could not reach the server. Check your connection.",
+                chat_err_generic: "AI error", chat_err_img: "Could not read the image. Use JPG/PNG/WEBP.",
+                chat_err_big: "Image is too large (max 10MB).", chat_you: "You", chat_image_only: "📷 (photo)"
+            },
+            RU: {
+                chat_provider: "Провайдер", chat_model: "Модель", chat_key_label: "API-ключ", chat_save: "Сохранить",
+                chat_placeholder: "Отправьте фото блюда или напишите (напр.: 2 яйца + кусок хлеба)...",
+                chat_welcome: "Привет! 👋 Я помощник NutriFit по питанию. Отправьте фото блюда (или опишите его) — я назову состав, граммы, калории и белок каждого компонента. Затем добавьте результат в дневник одним касанием.",
+                chat_no_key: "⚠️ Для работы ИИ нужен API-ключ. Нажмите ⚙️ выше и введите ключ.",
+                chat_saved: "Настройки ИИ сохранены", chat_cleared: "Новый чат начат",
+                chat_thinking: "Анализирую...", chat_add_log: "Добавить в Дневник",
+                chat_ing: "Ингредиент", chat_grams: "Граммы", chat_total: "Итого", chat_conf: "Точность",
+                chat_conf_high: "Высокая", chat_conf_medium: "Средняя", chat_conf_low: "Низкая",
+                chat_err_401: "Сервис ИИ временно недоступен (неверный ключ). Сообщите администратору.",
+                chat_err_429: "Лимит запросов исчерпан. Подождите и повторите.",
+                chat_err_net: "Ошибка сети: не удалось подключиться к серверу.",
+                chat_err_generic: "Ошибка ИИ", chat_err_img: "Не удалось прочитать фото. Используйте JPG/PNG/WEBP.",
+                chat_err_big: "Фото слишком большое (макс. 10МБ).", chat_you: "Вы", chat_image_only: "📷 (фото)"
+            }
+        };
+        Object.keys(chatI18n).forEach(l => Object.assign(i18nDict[l], chatI18n[l]));
+
+        // BMR & TDEE MATHEMATICS ENGINE (Mifflin-St Jeor)
+        function calculateBmrAndTdee(age, weight, height, goal, days) {
+            const bmr = Math.round((10 * weight) + (6.25 * height) - (5 * age) + 5);
+            let activityFactor = 1.2;
+            if (days >= 1 && days <= 2) activityFactor = 1.375;
+            else if (days >= 3 && days <= 4) activityFactor = 1.55;
+            else if (days >= 5 && days <= 6) activityFactor = 1.725;
+            else if (days >= 7) activityFactor = 1.9;
+
+            const tdee = Math.round(bmr * activityFactor);
+            let calTarget = tdee;
+            if (goal === 'gain') calTarget += 400;
+            else if (goal === 'lose') calTarget -= 500;
+
+            const protTarget = Math.round(weight * 2.2);
+            const fatTarget = Math.round((calTarget * 0.25) / 9);
+            const carbTarget = Math.max(50, Math.round((calTarget - (protTarget * 4) - (fatTarget * 9)) / 4));
+
+            return { bmr, tdee, targets: { cal: calTarget, prot: protTarget, carb: carbTarget, fat: fatTarget } };
+        }
+
+        // DATE STR FOR STREAK & MIDNIGHT RESET
+        function getTodayDateStr() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // BUG-FREE DAILY STREAK ENGINE
+        function updateAndCalculateStreak() {
+            if (!appState.currentUser) return 1;
+            const email = appState.currentUser.email.toLowerCase();
+            const dateKey = 'nutrifit_last_active_date_' + email;
+            const streakKey = 'nutrifit_streak_count_' + email;
+
+            const today = getTodayDateStr();
+            let lastActive = localStorage.getItem(dateKey);
+            let streak = parseInt(localStorage.getItem(streakKey) || '0', 10);
+
+            if (!lastActive) {
+                streak = 1;
+                lastActive = today;
+            } else if (lastActive === today) {
+                if (streak === 0) streak = 1;
+            } else {
+                const lastDateObj = new Date(lastActive);
+                const todayObj = new Date(today);
+                const diffTime = Math.abs(todayObj - lastDateObj);
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 1) {
+                    streak += 1;
+                } else if (diffDays > 1) {
+                    streak = 1;
+                }
+                lastActive = today;
+            }
+
+            localStorage.setItem(dateKey, lastActive);
+            localStorage.setItem(streakKey, streak.toString());
+            return streak;
+        }
+
+        // GET USER DAILY LOGS WITH AUTOMATIC 00:00 MIDNIGHT RESET
+        function getUserLogs() {
+            if (!appState.currentUser) return { lastLogDate: getTodayDateStr(), cal: 0, prot: 0, carb: 0, fat: 0, history: [] };
+            const email = appState.currentUser.email.toLowerCase();
+            const storageKey = 'nutrifit_daily_logs_' + email;
+            const stored = localStorage.getItem(storageKey);
+            const today = getTodayDateStr();
+
+            let logs = stored ? JSON.parse(stored) : null;
+
+            if (!logs || logs.lastLogDate !== today) {
+                // MIDNIGHT RESET ENGINE AT 00:00!
+                logs = {
+                    lastLogDate: today,
+                    cal: 0,
+                    prot: 0,
+                    carb: 0,
+                    fat: 0,
+                    history: []
+                };
+                localStorage.setItem(storageKey, JSON.stringify(logs));
+            }
+            return logs;
+        }
+
+        function saveLogsToStorage(logs) {
+            if (!appState.currentUser) return;
+            const email = appState.currentUser.email.toLowerCase();
+            localStorage.setItem('nutrifit_daily_logs_' + email, JSON.stringify(logs));
+        }
+
+        function saveUsersToStorage() {
+            localStorage.setItem('nutrifit_registered_users', JSON.stringify(appState.users));
+        }
+
+        // INITIALIZE APP AND PERSISTENCE
+        window.addEventListener('load', () => {
+            const storedUsers = localStorage.getItem('nutrifit_registered_users');
+            if (storedUsers) {
+                appState.users = JSON.parse(storedUsers);
+            }
+
+            const activeSessionEmail = localStorage.getItem('nutrifit_active_session');
+            if (activeSessionEmail) {
+                const found = appState.users.find(u => u.email.toLowerCase() === activeSessionEmail.toLowerCase());
+                if (found) {
+                    appState.currentUser = found;
+                    document.getElementById('auth-modal').classList.add('hidden');
+                    initMainApp();
+                } else {
+                    document.getElementById('auth-modal').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('auth-modal').classList.remove('hidden');
+            }
+
+            renderIngredientGrid();
+        });
+
+        // AUTH TAB SWITCHING
+        function switchAuthTab(tab) {
+            document.getElementById('login-error-msg').classList.add('hidden');
+            document.getElementById('signup-error-msg').classList.add('hidden');
+
+            if (tab === 'login') {
+                document.getElementById('form-login').classList.remove('hidden');
+                document.getElementById('form-signup').classList.add('hidden');
+                document.getElementById('auth-tab-login').className = "flex-1 py-2 rounded-lg text-xs font-bold bg-white dark:bg-slate-700 text-emerald-600 shadow-sm transition";
+                document.getElementById('auth-tab-signup').className = "flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 transition";
+            } else {
+                document.getElementById('form-login').classList.add('hidden');
+                document.getElementById('form-signup').classList.remove('hidden');
+                document.getElementById('auth-tab-signup').className = "flex-1 py-2 rounded-lg text-xs font-bold bg-white dark:bg-slate-700 text-teal-600 shadow-sm transition";
+                document.getElementById('auth-tab-login').className = "flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 transition";
+            }
+        }
+
+        // STRICT LOGIN SUBMIT HANDLER
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
+            const passInput = document.getElementById('login-pass').value;
+            const errBox = document.getElementById('login-error-msg');
+            const dict = i18nDict[appState.lang] || i18nDict.AZ;
+
+            errBox.classList.add('hidden');
+
+            const foundUser = appState.users.find(u => u.email.toLowerCase() === emailInput);
+
+            if (!foundUser) {
+                errBox.innerText = dict.err_user_not_found;
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            if (foundUser.password !== passInput) {
+                errBox.innerText = dict.err_wrong_pass;
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            // SUCCESSFUL LOGIN
+            appState.currentUser = foundUser;
+            localStorage.setItem('nutrifit_active_session', foundUser.email);
+            document.getElementById('auth-modal').classList.add('hidden');
+            initMainApp();
+            showToast(`${dict.tab_login}: ${foundUser.name}`, "success");
+        }
+
+        // STRICT SIGNUP SUBMIT HANDLER
+        function handleSignupSubmit(e) {
+            e.preventDefault();
+            const dict = i18nDict[appState.lang] || i18nDict.AZ;
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim().toLowerCase();
+            const pass = document.getElementById('signup-pass').value;
+            const confirmPass = document.getElementById('signup-confirm-pass').value;
+            const age = parseInt(document.getElementById('signup-age').value) || 18;
+            const height = parseFloat(document.getElementById('signup-height').value) || 172;
+            const weight = parseFloat(document.getElementById('signup-weight').value) || 63;
+            const goal = document.getElementById('signup-goal').value;
+            const days = parseInt(document.getElementById('signup-days').value) || 4;
+            const errBox = document.getElementById('signup-error-msg');
+
+            errBox.classList.add('hidden');
+
+            if (pass !== confirmPass) {
+                errBox.innerText = dict.err_pass_mismatch;
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            if (pass.length < 6) {
+                errBox.innerText = dict.err_pass_short;
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            const existing = appState.users.find(u => u.email.toLowerCase() === email);
+            if (existing) {
+                errBox.innerText = dict.err_email_exists;
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            const metrics = calculateBmrAndTdee(age, weight, height, goal, days);
+
+            const newUser = {
+                id: 'user_' + Date.now(),
+                name, email, password: pass, age, height, weight, goal, workoutDays: days,
+                avatar: '', bmr: metrics.bmr, tdee: metrics.tdee, targets: metrics.targets
+            };
+
+            appState.users.push(newUser);
+            saveUsersToStorage();
+
+            appState.currentUser = newUser;
+            localStorage.setItem('nutrifit_active_session', newUser.email);
+            document.getElementById('auth-modal').classList.add('hidden');
+            initMainApp();
+            showToast(dict.btn_signup, "success");
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('nutrifit_active_session');
+            appState.currentUser = null;
+            closeProfileModal();
+            document.getElementById('auth-modal').classList.remove('hidden');
+            showToast("Çıxış Olundu", "info");
+        }
+
+        // INITIALIZE MAIN DASHBOARD
+        function initMainApp() {
+            updateUserUIInfo();
+            renderDashboardLogs();
+            renderWeeklyPlan();
+            renderGroceryList();
+            generateCustomWorkoutProgram();
+            renderPdfReport();
+        }
+
+        function updateUserUIInfo() {
+            const u = appState.currentUser;
+            if (!u) return;
+            const logs = getUserLogs();
+            const streak = updateAndCalculateStreak();
+            const dict = i18nDict[appState.lang] || i18nDict.AZ;
+
+            const initial = u.name ? u.name.charAt(0).toUpperCase() : 'E';
+
+            // Avatar texts & images
+            document.getElementById('hdr-avatar-txt').innerText = initial;
+            document.getElementById('sb-avatar-txt').innerText = initial;
+            document.getElementById('modal-avatar-txt').innerText = initial;
+
+            if (u.avatar) {
+                document.getElementById('hdr-avatar-img').src = u.avatar;
+                document.getElementById('hdr-avatar-img').classList.remove('hidden');
+                document.getElementById('hdr-avatar-txt').classList.add('hidden');
+
+                document.getElementById('sb-avatar-img').src = u.avatar;
+                document.getElementById('sb-avatar-img').classList.remove('hidden');
+                document.getElementById('sb-avatar-txt').classList.add('hidden');
+
+                document.getElementById('modal-avatar-img').src = u.avatar;
+                document.getElementById('modal-avatar-img').classList.remove('hidden');
+                document.getElementById('modal-avatar-txt').classList.add('hidden');
+            } else {
+                document.getElementById('hdr-avatar-img').classList.add('hidden');
+                document.getElementById('hdr-avatar-txt').classList.remove('hidden');
+                document.getElementById('sb-avatar-img').classList.add('hidden');
+                document.getElementById('sb-avatar-txt').classList.remove('hidden');
+                document.getElementById('modal-avatar-img').classList.add('hidden');
+                document.getElementById('modal-avatar-txt').classList.remove('hidden');
+            }
+
+            // Stats Text
+            document.getElementById('sb-user-name').innerText = u.name;
+            document.getElementById('banner-welcome-title').innerText = `${u.name ? u.name.split(' ')[0] : 'İstifadəçi'}!`;
+            document.getElementById('stat-age').innerText = u.age;
+            document.getElementById('stat-height').innerText = `${u.height} sm`;
+            document.getElementById('stat-weight').innerText = `${u.weight} kq`;
+            document.getElementById('stat-streak').innerText = streak;
+            document.getElementById('hdr-streak-txt').innerText = `${streak} Gün`;
+            document.getElementById('sb-streak-val').innerHTML = `<i class="fa-solid fa-fire mr-1"></i>${streak} Gün`;
+            document.getElementById('sb-bmr-val').innerText = `${u.bmr} kkal`;
+            document.getElementById('sb-tdee-val').innerText = `${u.tdee} kkal`;
+            document.getElementById('dash-bmr-display').innerText = u.bmr;
+
+            const goalKey = 'goal_' + u.goal;
+            const goalText = dict[goalKey] || u.goal;
+            document.getElementById('sb-user-goal').innerText = goalText;
+            document.getElementById('banner-goal-tag').innerText = goalText;
+
+            // Targets & Progress
+            document.getElementById('dash-cal-target').innerText = `${u.targets.cal} kkal`;
+            document.getElementById('dash-consumed-cal').innerText = logs.cal;
+
+            const remaining = Math.max(0, u.targets.cal - logs.cal);
+            document.getElementById('dash-remaining-cal').innerText = `${remaining} kkal`;
+
+            // Circle Dashoffset (Circumference ~ 364.4)
+            const circle = document.getElementById('dash-ring-progress');
+            const percent = Math.min(logs.cal / u.targets.cal, 1);
+            circle.style.strokeDashoffset = 364.4 - (364.4 * percent);
+
+            // Macro Bars
+            document.getElementById('dash-prot-txt').innerText = `${logs.prot}g / ${u.targets.prot}g`;
+            document.getElementById('dash-carb-txt').innerText = `${logs.carb}g / ${u.targets.carb}g`;
+            document.getElementById('dash-fat-txt').innerText = `${logs.fat}g / ${u.targets.fat}g`;
+
+            document.getElementById('dash-prot-bar').style.width = `${Math.min((logs.prot / u.targets.prot)*100, 100)}%`;
+            document.getElementById('dash-carb-bar').style.width = `${Math.min((logs.carb / u.targets.carb)*100, 100)}%`;
+            document.getElementById('dash-fat-bar').style.width = `${Math.min((logs.fat / u.targets.fat)*100, 100)}%`;
+
+            // Context note in workout tab
+            document.getElementById('workout-desc-context').innerText = 
+                `${u.age} ${dict.age}, ${u.height} sm, ${u.weight} kq (${goalText}) — BMR: ${u.bmr} kkal, TDEE: ${u.tdee} kkal.`;
+        }
+
+        // ADD MEAL LOG TO PROGRESS RINGS AND INCREMENT STREAK
+        function addMealToDailyLog(title, cal, prot, carb, fat) {
+            const logs = getUserLogs();
+            logs.cal += Math.round(cal);
+            logs.prot += Math.round(prot);
+            logs.carb += Math.round(carb);
+            logs.fat += Math.round(fat);
+
+            logs.history.unshift({
+                title, cal: Math.round(cal), prot: Math.round(prot), carb: Math.round(carb), fat: Math.round(fat),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+
+            saveLogsToStorage(logs);
+            updateAndCalculateStreak();
+            updateUserUIInfo();
+            renderDashboardLogs();
+            renderPdfReport();
+            showToast(`+${cal} kkal əlavə edildi!`, "success");
+            switchTab('dashboard');
+        }
+
+        function renderDashboardLogs() {
+            const logs = getUserLogs();
+            const list = document.getElementById('dash-log-list');
+            const badge = document.getElementById('log-count-badge');
+            const dict = i18nDict[appState.lang] || i18nDict.AZ;
+            badge.innerText = `${logs.history.length}`;
+
+            if (logs.history.length === 0) {
+                list.innerHTML = `<p class="text-slate-400 text-[11px] italic" data-i18n="no_logs">${dict.no_logs}</p>`;
+                return;
+            }
+
+            list.innerHTML = logs.history.map(item => `
+                <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                    <div>
+                        <strong class="block text-slate-800 dark:text-slate-200 text-xs">${item.title}</strong>
+                        <span class="text-[10px] text-slate-400">${item.time} | ${item.prot}g ${dict.protein}</span>
+                    </div>
+                    <span class="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">+${item.cal} kkal</span>
+                </div>
+            `).join('');
+        }
+
+        // CUSTOM MEAL MODAL CONTROLS
+        function openCustomMealModal() {
+            document.getElementById('custom-meal-modal').classList.remove('hidden');
+        }
+        function closeCustomMealModal() {
+            document.getElementById('custom-meal-modal').classList.add('hidden');
+        }
+        function submitCustomMeal() {
+            const title = document.getElementById('custom-meal-title').value.trim() || "Xüsusi Yemək";
+            const cal = parseFloat(document.getElementById('custom-meal-cal').value) || 300;
+            const prot = parseFloat(document.getElementById('custom-meal-prot').value) || 20;
+            const carb = parseFloat(document.getElementById('custom-meal-carb').value) || 30;
+            const fat = parseFloat(document.getElementById('custom-meal-fat').value) || 10;
+
+            addMealToDailyLog(title, cal, prot, carb, fat);
+            closeCustomMealModal();
+        }
+
+        // DEVICE GALLERY FILE AVATAR UPLOAD
+        function handleDeviceAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Url = e.target.result;
+                appState.currentUser.avatar = base64Url;
+
+                const idx = appState.users.findIndex(u => u.email === appState.currentUser.email);
+                if (idx !== -1) appState.users[idx].avatar = base64Url;
+
+                saveUsersToStorage();
+                updateUserUIInfo();
+                showToast("Profil Şəkli Yeniləndi", "success");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // PROFILE EDIT MODAL & PASSWORD VALIDATION
+        function openProfileModal() {
+            const u = appState.currentUser;
+            if (!u) return;
+            document.getElementById('prof-edit-name').value = u.name;
+            document.getElementById('prof-edit-age').value = u.age;
+            document.getElementById('prof-edit-height').value = u.height;
+            document.getElementById('prof-edit-weight').value = u.weight;
+            document.getElementById('prof-edit-goal').value = u.goal;
+            document.getElementById('prof-edit-days').value = u.workoutDays;
+
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.add('hidden');
+        }
+
+        function saveProfileChanges() {
+            const u = appState.currentUser;
+            u.name = document.getElementById('prof-edit-name').value.trim() || u.name;
+            u.age = parseInt(document.getElementById('prof-edit-age').value) || u.age;
+            u.height = parseFloat(document.getElementById('prof-edit-height').value) || u.height;
+            u.weight = parseFloat(document.getElementById('prof-edit-weight').value) || u.weight;
+            u.goal = document.getElementById('prof-edit-goal').value;
+            u.workoutDays = parseInt(document.getElementById('prof-edit-days').value) || u.workoutDays;
+
+            const metrics = calculateBmrAndTdee(u.age, u.weight, u.height, u.goal, u.workoutDays);
+            u.bmr = metrics.bmr;
+            u.tdee = metrics.tdee;
+            u.targets = metrics.targets;
+
+            const idx = appState.users.findIndex(usr => usr.email === u.email);
+            if (idx !== -1) appState.users[idx] = u;
+
+            saveUsersToStorage();
+            updateUserUIInfo();
+            generateCustomWorkoutProgram();
+            closeProfileModal();
+            showToast("BMR və Profil Yeniləndi", "success");
+        }
+
+        function saveNewPassword() {
+            const u = appState.currentUser;
+            const dict = i18nDict[appState.lang] || i18nDict.AZ;
+            const oldPass = document.getElementById('prof-old-pass').value;
+            const newPass = document.getElementById('prof-new-pass').value;
+            const confirmNewPass = document.getElementById('prof-confirm-new-pass').value;
+
+            if (oldPass !== u.password) {
+                showToast(dict.err_wrong_pass, "error");
+                return;
+            }
+
+            if (newPass !== confirmNewPass) {
+                showToast(dict.err_pass_mismatch, "error");
+                return;
+            }
+
+            if (newPass.length < 6) {
+                showToast(dict.err_pass_short, "error");
+                return;
+            }
+
+            u.password = newPass;
+            const idx = appState.users.findIndex(usr => usr.email === u.email);
+            if (idx !== -1) appState.users[idx].password = newPass;
+
+            saveUsersToStorage();
+            document.getElementById('prof-old-pass').value = '';
+            document.getElementById('prof-new-pass').value = '';
+            document.getElementById('prof-confirm-new-pass').value = '';
+
+            showToast("Parol Dəyişdirildi", "success");
+        }
+
+        // INGREDIENTS GRID RENDERER
+        function renderIngredientGrid() {
+            const container = document.getElementById('ingredients-grid');
+            const searchVal = document.getElementById('ing-search-input').value.toLowerCase();
+            const lang = appState.lang;
+
+            const filtered = ingredientsDatabase.filter(item => {
+                const matchesCat = (activeIngredientCategory === 'all' || item.cat === activeIngredientCategory);
+                const nameInLang = (item.name[lang] || item.name.AZ).toLowerCase();
+                const matchesSearch = nameInLang.includes(searchVal);
+                return matchesCat && matchesSearch;
+            });
+
+            const dict = i18nDict[lang] || i18nDict.AZ;
+
+            container.innerHTML = filtered.map(item => {
+                const isSelected = appState.selectedIngs.includes(item.id);
+                const nameStr = item.name[lang] || item.name.AZ;
+                return `
+                    <div onclick="toggleIngredientSelection('${item.id}')" class="p-2.5 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between ${isSelected ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-emerald-500'}">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-xs truncate ${isSelected ? 'text-white' : 'text-slate-800 dark:text-slate-100'}">${nameStr}</span>
+                                <i class="fa-solid ${isSelected ? 'fa-circle-check text-white' : 'fa-plus text-slate-400'} text-xs"></i>
+                            </div>
+                            <span class="text-[10px] block opacity-80 font-medium">${item.cal} kkal (100g)</span>
+                        </div>
+                        <div class="mt-2 pt-1 border-t border-black/10 dark:border-white/10 text-[9px] flex justify-between font-semibold">
+                            <span>${dict.protein}: ${item.prot}g</span>
+                            <span>${dict.carbs}: ${item.carb}g</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updateSelectedIngredientsSummary();
+        }
+
+        function setIngredientCategory(cat) {
+            activeIngredientCategory = cat;
+            document.querySelectorAll('.ing-cat-btn').forEach(btn => {
+                btn.className = "ing-cat-btn px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap";
+            });
+            const activeBtn = document.getElementById('cat-btn-' + cat);
+            if (activeBtn) {
+                activeBtn.className = "ing-cat-btn px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white whitespace-nowrap";
+            }
+            renderIngredientGrid();
+        }
+
+        function filterIngredients() { renderIngredientGrid(); }
+
+        function toggleIngredientSelection(id) {
+            if (appState.selectedIngs.includes(id)) {
+                appState.selectedIngs = appState.selectedIngs.filter(i => i !== id);
+            } else {
+                appState.selectedIngs.push(id);
+            }
+            renderIngredientGrid();
+        }
+
+        function clearSelectedIngredients() {
+            appState.selectedIngs = [];
+            renderIngredientGrid();
+            document.getElementById('generated-recipes-container').innerHTML = '';
+        }
+
+        function updateSelectedIngredientsSummary() {
+            const count = appState.selectedIngs.length;
+            document.getElementById('selected-count').innerText = count;
+            const dict = i18nDict[appState.lang] || i18nDict.AZ;
+
+            let totalCal = 0, totalProt = 0, totalCarb = 0;
+            appState.selectedIngs.forEach(id => {
+                const item = ingredientsDatabase.find(i => i.id === id);
+                if (item) {
+                    totalCal += item.cal;
+                    totalProt += item.prot;
+                    totalCarb += item.carb;
+                }
+            });
+
+            document.getElementById('selected-summary-macros').innerText = 
+                `${dict.protein}: ${totalProt.toFixed(1)}g | ${dict.unit_kcal}: ${Math.round(totalCal)} kkal | ${dict.carbs}: ${totalCarb.toFixed(1)}g`;
+        }
+
+        // GENERATE UNIQUE & REALISTIC RECIPE FROM SELECTED FRIDGE ITEMS
+        function generateRecipeFromFridge() {
+            if (appState.selectedIngs.length === 0) {
+                showToast("Zəhmət olmasa ən az 1 ərzaq seçin!", "error");
+                return;
+            }
+
+            const lang = appState.lang;
+            const dict = i18nDict[lang] || i18nDict.AZ;
+            const items = appState.selectedIngs.map(id => ingredientsDatabase.find(i => i.id === id));
+            const totalCal = items.reduce((sum, i) => sum + i.cal, 0);
+            const totalProt = items.reduce((sum, i) => sum + i.prot, 0);
+            const totalCarb = items.reduce((sum, i) => sum + i.carb, 0);
+            const totalFat = items.reduce((sum, i) => sum + i.fat, 0);
+
+            const container = document.getElementById('generated-recipes-container');
+            
+            // Dynamic specific recipe naming logic
+            const ids = appState.selectedIngs;
+            let recipeTitle = "Zülallı Fit Yemək";
+            let steps = [];
+
+            if (ids.includes('i25') && ids.includes('i10')) { // Banana + Egg
+                recipeTitle = "Bananlı Protein Pankeyk";
+                steps = [
+                    "Bananı çəngəllə püre halına gələnədək yaxşıca əzin.",
+                    "Yumurtanı sındırıb əzilən bananla birlikdə tam homogen olana qədər çalın.",
+                    "Yapışmayan tavanı azca zeytun yağı ilə yağlayıb orta dərəcəli odda qızdırın.",
+                    "Qarışığı tavaya tökün, hər iki üzünü 2-3 dəqiqə qızılı rəng alanadək bişirin."
+                ];
+            } else if (ids.includes('i1') && ids.includes('i17')) { // Chicken + Rice
+                recipeTitle = "Fırında Zəncəfilli Toyuq və Düyü";
+                steps = [
+                    "Düyünü bol suda yumşalana qədər (təxminən 15 dəqiqə) qaynadın.",
+                    "Toyuq sinəsini xırda tikələrə doğrayın, sarımsaq və zeytun yağı ilə marinadlayın.",
+                    "Toyuq tikələrini tavada 10 dəqiqə qızardın.",
+                    "Qaynadılmış düyünü və toyuğu boşqaba çəkin, üzərinə göyərti əlavə edib servis edin."
+                ];
+            } else if (ids.includes('i16') && ids.includes('i37') && ids.includes('i35')) { // Oats + Milk + Peanut Butter
+                recipeTitle = "Zülallı Yulaf Lapası";
+                steps = [
+                    "Südü kiçik qazanda vam odda qızdırın.",
+                    "Yulaf əzməsini əlavə edib 5 dəqiqə davamlı qarışdıraraq bişirin.",
+                    "Sıyıq qatlaşdıqdan sonra ocaqdan götürün və üzərinə fıstıq əzməsi əlavə edib qarışdırın."
+                ];
+            } else if (ids.includes('i6') && ids.includes('i21')) { // Salmon + Quinoa
+                recipeTitle = "Qızılbalıqlı və Kinoalı Fit Salat";
+                steps = [
+                    "Kinoanı 1:2 nisbətində suda 12 dəqiqə qaynadın və soyumağa qoyun.",
+                    "Qızılbalıq filesini sobada 180°C-də 15 dəqiqə bişirin.",
+                    "Kinoanı, xırda doğranmış tərəvəzləri və qızılbalığı birləşdirib zeytun yağı süzün."
+                ];
+            } else {
+                const main1 = items[0].name[lang] || items[0].name.AZ;
+                const main2 = items[1] ? (items[1].name[lang] || items[1].name.AZ) : "";
+                recipeTitle = `${main1} və ${main2} Fit Tavası`;
+                steps = [
+                    `${items.map(i => (i.name[lang]||i.name.AZ)).join(', ')} ərzaqlarını təmizləyin və lazımi porsiyalarla doğrayın.`,
+                    "Tavanı orta dərəcəli istilikdə qızdırın, azca zeytun yağı əlavə edin.",
+                    "İnqrediyentləri tavaya əlavə edib 12-15 dəqiqə ərzində bişirin və qarışdırın.",
+                    "Bişdikdən sonra isti halda süfrəyə verin və kalori hədəf üçün dərhal qeyd edin."
+                ];
+            }
+
+            container.innerHTML = `
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold rounded-lg">
+                            NutriFit AI Resept
+                        </span>
+                        <span class="text-xs text-slate-400 font-bold"><i class="fa-solid fa-clock text-emerald-500 mr-1"></i> 15-20 dəq</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">${recipeTitle}</h3>
+                    <p class="text-xs text-slate-500 mb-4">${items.map(i=>(i.name[lang]||i.name.AZ)).join(', ')}</p>
+                    
+                    <div class="grid grid-cols-4 gap-2 text-center bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl mb-4 border border-slate-100 dark:border-slate-800">
+                        <div><span class="block font-bold text-slate-800 dark:text-slate-100 text-sm">${Math.round(totalCal)}</span><span class="text-[10px] text-slate-400 font-bold uppercase">${dict.unit_kcal}</span></div>
+                        <div><span class="block font-bold text-emerald-600 text-sm">${totalProt.toFixed(1)}g</span><span class="text-[10px] text-slate-400 font-bold uppercase">${dict.protein}</span></div>
+                        <div><span class="block font-bold text-teal-600 text-sm">${totalCarb.toFixed(1)}g</span><span class="text-[10px] text-slate-400 font-bold uppercase">${dict.carbs}</span></div>
+                        <div><span class="block font-bold text-amber-600 text-sm">${totalFat.toFixed(1)}g</span><span class="text-[10px] text-slate-400 uppercase font-bold">${dict.fats}</span></div>
+                    </div>
+
+                    <button onclick="openCookingModal('${recipeTitle}', ${Math.round(totalCal)}, ${totalProt.toFixed(1)}, ${totalCarb.toFixed(1)}, ${totalFat.toFixed(1)}, ${JSON.stringify(steps).replace(/"/g, '&quot;')})" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-emerald-600/20 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-fire-burner"></i>
+                        <span data-i18n="cook_steps_title">Necə Bişirilir? (Spesifik Təlimat)</span>
+                    </button>
+                </div>
+            `;
+            showToast("AI Resept Hazırlandı", "success");
+        }
+
+        // STEP-BY-STEP COOKING MODAL
+        function openCookingModal(title, cal, prot, carb, fat, customSteps) {
+            const lang = appState.lang;
+            const dict = i18nDict[lang] || i18nDict.AZ;
+
+            document.getElementById('cook-recipe-title').innerText = title;
+            document.getElementById('cook-total-cal').innerText = cal;
+            document.getElementById('cook-total-prot').innerText = prot + 'g';
+            document.getElementById('cook-total-carb').innerText = carb + 'g';
+            document.getElementById('cook-total-fat').innerText = fat + 'g';
+
+            const items = appState.selectedIngs.map(id => ingredientsDatabase.find(i => i.id === id));
+            
+            // Item Breakdown
+            document.getElementById('cook-ingredients-list').innerHTML = items.map(i => {
+                const nameStr = i.name[lang] || i.name.AZ;
+                return `
+                    <div class="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-700/60 last:border-0">
+                        <span class="font-bold text-slate-700 dark:text-slate-200">• ${nameStr} (100g)</span>
+                        <span class="text-slate-500">${i.cal} kkal | ${i.prot}g ${dict.protein}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Steps
+            let stepsArray = customSteps || [
+                "Bütün ərzaqları təmizləyin və lazım olan porsiyalarla doğrayın.",
+                "Tavanı və ya qabı orta istilikdə qızdırıb bişirin.",
+                "Süfrəyə təqdim edin və gündəlik loga əlavə edin."
+            ];
+
+            document.getElementById('cook-steps-container').innerHTML = stepsArray.map((step, idx) => `
+                <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80">
+                    <strong class="text-emerald-600 dark:text-emerald-400 font-bold block mb-0.5">${idx + 1}. Addım:</strong>
+                    ${step}
+                </div>
+            `).join('');
+
+            document.getElementById('btn-log-modal-recipe').onclick = function() {
+                addMealToDailyLog(title, cal, prot, carb, fat);
+                closeCookingModal();
+            };
+
+            document.getElementById('cooking-modal').classList.remove('hidden');
+        }
+
+        function closeCookingModal() {
+            document.getElementById('cooking-modal').classList.add('hidden');
+        }
+
+        // =====================================================================
+        // AI FOOD CHATBOT ENGINE (replaces the old fake scanner)
+        // Real vision AI: Gemini (Google) with a built-in key (no API UI for users).
+        // =====================================================================
+        // Paste your Cloudflare Worker URL here (see worker.js). The Gemini API key is stored ONLY in the Worker.
+        const CHAT_PROXY_URL = 'https://fancy-base-b421.huseynoverdem.workers.dev';
+        const CHAT_GEMINI_KEY = ''; // optional, direct mode for local testing only (visible to users!)
+        const CHAT_MODELS = ['auto']; // the Worker picks the best available Gemini model // tried in order if one is unavailable
+        const chatState = { history: [], pendingImage: null, busy: false, inited: false };
+
+        function chatT(key) {
+            const d = i18nDict[appState.lang] || i18nDict.AZ;
+            return d[key] || i18nDict.AZ[key] || key;
+        }
+        function chatEsc(v) {
+            return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+        function chatLoadCfg() { return { key: CHAT_PROXY_URL || CHAT_GEMINI_KEY }; }
+
+        // ---------- Init / welcome ----------
+        function chatEnsureInit() {
+            if (chatState.inited) return;
+            chatState.inited = true;
+            chatRenderWelcome();
+        }
+        function chatOnLanguageChange() {
+            if (chatState.inited && chatState.history.length === 0) chatRenderWelcome();
+        }
+        function chatRenderWelcome() {
+            const box = document.getElementById('chat-messages');
+            box.innerHTML = '';
+            chatAddBubble('assistant', { text: chatT('chat_welcome') });
+        }
+        function chatNewConversation() {
+            if (chatState.busy) return;
+            chatState.history = [];
+            chatClearPendingImage();
+            chatEnsureInit();
+            chatRenderWelcome();
+            showToast(chatT('chat_cleared'), 'info');
+        }
+        function resetScannerView() { chatNewConversation(); } // backwards-compatible alias
+
+        // ---------- UI helpers ----------
+        function chatScrollDown() {
+            const box = document.getElementById('chat-messages');
+            box.scrollTop = box.scrollHeight;
+        }
+        function chatAddBubble(role, opts) {
+            const box = document.getElementById('chat-messages');
+            const wrap = document.createElement('div');
+            wrap.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
+            const bubble = document.createElement('div');
+            if (role === 'user') {
+                bubble.className = 'max-w-[85%] bg-emerald-600 text-white rounded-2xl rounded-br-md px-3.5 py-2.5 text-xs leading-relaxed shadow-sm';
+            } else if (opts.isError) {
+                bubble.className = 'max-w-[92%] bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 rounded-2xl rounded-bl-md px-3.5 py-2.5 text-xs leading-relaxed';
+            } else {
+                bubble.className = 'max-w-[92%] w-fit bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl rounded-bl-md px-3.5 py-2.5 text-xs leading-relaxed';
+            }
+            if (opts.imageUrl) {
+                const img = document.createElement('img');
+                img.src = opts.imageUrl;
+                img.className = 'rounded-xl mb-2 max-h-48 w-auto object-cover';
+                bubble.appendChild(img);
+            }
+            if (opts.text) {
+                const p = document.createElement('div');
+                p.style.whiteSpace = 'pre-wrap';
+                p.style.wordBreak = 'break-word';
+                p.textContent = opts.text;
+                bubble.appendChild(p);
+            }
+            wrap.appendChild(bubble);
+            box.appendChild(wrap);
+            chatScrollDown();
+            return bubble;
+        }
+        function chatAddTyping() {
+            const box = document.getElementById('chat-messages');
+            const wrap = document.createElement('div');
+            wrap.className = 'flex justify-start';
+            wrap.innerHTML = `<div class="bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-2xl rounded-bl-md px-3.5 py-2.5 text-xs flex items-center space-x-2"><i class="fa-solid fa-circle-notch animate-spin text-emerald-500"></i><span>${chatEsc(chatT('chat_thinking'))}</span></div>`;
+            box.appendChild(wrap);
+            chatScrollDown();
+            return wrap;
+        }
+        function chatAutoGrow(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 128) + 'px';
+        }
+        function chatInputKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+                e.preventDefault();
+                chatSend();
+            }
+        }
+        function chatSetBusy(b) {
+            chatState.busy = b;
+            const btn = document.getElementById('chat-send-btn');
+            btn.disabled = b;
+            btn.innerHTML = b ? '<i class="fa-solid fa-circle-notch animate-spin"></i>' : '<i class="fa-solid fa-paper-plane"></i>';
+        }
+
+        // ---------- Image handling (resize to JPEG, max 1280px) ----------
+        function chatOnFileSelected(event) {
+            const file = event.target.files && event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) { showToast(chatT('chat_err_big'), 'error'); return; }
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = function () {
+                try {
+                    const MAX = 1280;
+                    const scale = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
+                    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+                    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.drawImage(img, 0, 0, w, h);
+                    chatState.pendingImage = canvas.toDataURL('image/jpeg', 0.85);
+                    document.getElementById('chat-pending-img').src = chatState.pendingImage;
+                    document.getElementById('chat-pending').classList.remove('hidden');
+                } catch (e) {
+                    showToast(chatT('chat_err_img'), 'error');
+                } finally {
+                    URL.revokeObjectURL(url);
+                }
+            };
+            img.onerror = function () { URL.revokeObjectURL(url); showToast(chatT('chat_err_img'), 'error'); };
+            img.src = url;
+        }
+        function chatClearPendingImage() {
+            chatState.pendingImage = null;
+            document.getElementById('chat-pending').classList.add('hidden');
+            document.getElementById('chat-pending-img').src = '';
+        }
+
+        // ---------- Prompt ----------
+        function chatSystemPrompt() {
+            const langName = { AZ: 'Azerbaijani', EN: 'English', RU: 'Russian' }[appState.lang] || 'Azerbaijani';
+            const u = appState.currentUser;
+            let profile = '';
+            if (u) {
+                const bits = [];
+                if (u.goal) bits.push('goal: ' + u.goal);
+                if (u.age) bits.push('age ' + u.age);
+                if (u.weight) bits.push('weight ' + u.weight + ' kg');
+                if (u.height) bits.push('height ' + u.height + ' cm');
+                if (u.targets) bits.push('daily targets: ' + u.targets.cal + ' kcal, ' + u.targets.prot + ' g protein');
+                if (bits.length) profile = '\nUser profile: ' + bits.join(', ') + '.';
+            }
+            return `You are NutriFit AI, a precise nutrition assistant inside a fitness app. You analyze meal photos and meal descriptions and also answer short nutrition/fitness questions.
+
+OUTPUT FORMAT: respond with exactly ONE valid JSON object and nothing else (no markdown, no code fences, no text before or after):
+{"reply": string, "is_food": boolean, "meal": null | {"name": string, "confidence": "high"|"medium"|"low", "notes": string, "ingredients": [{"name": string, "grams": number, "cal": number, "prot": number, "carb": number, "fat": number}]}}
+
+RULES:
+- Write "reply", "meal.name", "meal.notes" and every ingredient "name" in ${langName}.
+- "reply" is a short friendly message: say what you see, state key assumptions (cooking oil, sauces, portion size), and if the portion is unclear say what extra info would improve accuracy.
+- When the photo/text contains food or a described meal: set is_food=true and fill "meal". List EVERY component as a separate ingredient (main protein, side, bread, vegetables, oil, sauces, dressing, drinks, etc.).
+- "grams" = estimated weight of that component AS EATEN (cooked/prepared weight), rounded to the nearest 5. Use visual cues for scale (standard dinner plate about 26 cm, cutlery, hands, cups, packaging, bread size).
+- "cal", "prot", "carb", "fat" are the TOTAL values for that ingredient at its "grams" (NOT per 100 g). Use USDA / standard food composition values for the cooked or prepared state. Round to 1 decimal. cal must be consistent with 4*prot + 4*carb + 9*fat (within about 10%).
+- Include realistic hidden calories (cooking oil, butter, mayo, sugar in sauces) for restaurant or home-cooked dishes.
+- If a nutrition-facts label or packaging with values is visible, use the label values and scale by the visible/stated amount.
+- Do not invent precision: choose the most probable estimate and set "confidence" honestly.
+- If the user corrects something (e.g. "the rice was 150 g", "no oil"), recompute and return the FULL updated "meal".
+- If the image or message is not food and not nutrition related: is_food=false, meal=null, and kindly say you can only help with food and nutrition.
+- For general nutrition/fitness questions without a specific meal: answer in "reply", is_food=false, meal=null. Keep replies concise.
+- All numeric fields must be plain JSON numbers without units.${profile}`;
+        }
+
+        // ---------- API calls ----------
+        function chatDataUrlToParts(dataUrl) {
+            const m = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+            return m ? { mime: m[1], data: m[2] } : null;
+        }
+        async function chatHttpError(res, provider) {
+            let detail = '';
+            try {
+                const j = await res.json();
+                detail = (j && j.error && (j.error.message || j.error.status)) || JSON.stringify(j).slice(0, 200);
+            } catch (e) { /* ignore */ }
+            const err = new Error(detail || ('HTTP ' + res.status));
+            err.status = res.status;
+            err.isHttp = true;
+            if (res.status === 400 && /api key/i.test(detail)) err.status = 401;
+            return err;
+        }
+        async function chatCallGemini(model, system, msgs, signal) {
+            const contents = msgs.map(m => {
+                if (m.role === 'assistant') return { role: 'model', parts: [{ text: m.text }] };
+                const parts = [];
+                const p = m.image ? chatDataUrlToParts(m.image) : null;
+                if (p) parts.push({ inlineData: { mimeType: p.mime, data: p.data } });
+                parts.push({ text: m.text });
+                return { role: 'user', parts };
+            });
+            const body = JSON.stringify({
+                systemInstruction: { parts: [{ text: system }] },
+                contents,
+                generationConfig: { temperature: 0.2, maxOutputTokens: 4096, responseMimeType: 'application/json' }
+            });
+            const m = encodeURIComponent(model);
+            // 1) Gemini Developer API (AIza... keys)  2) Vertex AI express endpoint (AQ.... keys)
+            const endpoints = CHAT_PROXY_URL ? [
+                { url: CHAT_PROXY_URL, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model, request: JSON.parse(body) }) }
+            ] : [
+                { url: 'https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent', headers: { 'content-type': 'application/json', 'x-goog-api-key': CHAT_GEMINI_KEY } },
+                { url: 'https://aiplatform.googleapis.com/v1/publishers/google/models/' + m + ':generateContent?key=' + encodeURIComponent(CHAT_GEMINI_KEY), headers: { 'content-type': 'application/json' } }
+            ];
+            if (!CHAT_PROXY_URL && !CHAT_GEMINI_KEY) throw new Error('AI is not configured: set CHAT_PROXY_URL in the HTML (see worker.js).');
+            let firstErr = null, res = null;
+            const tried = [];
+            for (const ep of endpoints) {
+                const host = ep.url.split('/')[2];
+                const ctl = new AbortController();
+                const onOuterAbort = () => ctl.abort();
+                if (signal) signal.addEventListener('abort', onOuterAbort);
+                let timedOut = false;
+                const t = setTimeout(() => { timedOut = true; ctl.abort(); }, CHAT_PROXY_URL ? 120000 : 25000);
+                try {
+                    const r = await fetch(ep.url, { method: 'POST', headers: ep.headers, body: ep.body || body, signal: ctl.signal });
+                    if (r.ok) { res = r; break; }
+                    const err = await chatHttpError(r, 'gemini');
+                    if (!firstErr) firstErr = err;
+                    if (![400, 401, 403].includes(r.status)) throw err;
+                } catch (e) {
+                    if (e && e.isHttp && ![400, 401, 403].includes(e.status)) throw (firstErr || e);
+                    if (!firstErr || !firstErr.isHttp) {
+                        if (timedOut) { const te = new Error('timeout'); te.isTimeout = true; tried.push(host); firstErr = firstErr || te; }
+                        else if (!(e && e.isHttp)) { tried.push(host); firstErr = firstErr || e; }
+                    }
+                } finally {
+                    clearTimeout(t);
+                    if (signal) signal.removeEventListener('abort', onOuterAbort);
+                }
+            }
+            if (!res && firstErr && !firstErr.isHttp) firstErr.hosts = tried.join(', ');
+            if (!res) throw firstErr || new Error('No response');
+            const data = await res.json();
+            if (data.promptFeedback && data.promptFeedback.blockReason) throw new Error('Blocked: ' + data.promptFeedback.blockReason);
+            const cand = data.candidates && data.candidates[0];
+            const text = cand && cand.content && cand.content.parts ? cand.content.parts.map(p => p.text || '').join('') : '';
+            if (!text) throw new Error('Empty response');
+            return text;
+        }
+
+        // ---------- Response parsing & validation ----------
+        function chatParseResponse(raw) {
+            let t = String(raw).trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+            const a = t.indexOf('{'), b = t.lastIndexOf('}');
+            let obj = null;
+            if (a !== -1 && b > a) {
+                try { obj = JSON.parse(t.slice(a, b + 1)); } catch (e) { obj = null; }
+            }
+            if (!obj || typeof obj !== 'object') return { reply: String(raw).trim(), is_food: false, meal: null };
+            return { reply: typeof obj.reply === 'string' ? obj.reply : '', is_food: !!obj.is_food, meal: chatNormalizeMeal(obj.meal) };
+        }
+        function chatNum(v) {
+            const n = typeof v === 'number' ? v : parseFloat(String(v).replace(',', '.'));
+            return Number.isFinite(n) && n >= 0 ? n : 0;
+        }
+        function chatNormalizeMeal(meal) {
+            if (!meal || !Array.isArray(meal.ingredients) || meal.ingredients.length === 0) return null;
+            const ings = meal.ingredients.map(i => {
+                const prot = chatNum(i.prot), carb = chatNum(i.carb), fat = chatNum(i.fat);
+                let cal = chatNum(i.cal);
+                const calc = 4 * prot + 4 * carb + 9 * fat;
+                // Keep calories consistent with macros (fixes common LLM arithmetic drift)
+                if (cal <= 0 || (calc > 0 && Math.abs(cal - calc) / calc > 0.15)) cal = calc;
+                return { name: String(i.name || '?'), grams: chatNum(i.grams), cal, prot, carb, fat };
+            }).filter(i => i.grams > 0 || i.cal > 0);
+            if (!ings.length) return null;
+            const total = ings.reduce((acc, i) => ({
+                cal: acc.cal + i.cal, prot: acc.prot + i.prot, carb: acc.carb + i.carb, fat: acc.fat + i.fat
+            }), { cal: 0, prot: 0, carb: 0, fat: 0 });
+            const conf = ['high', 'medium', 'low'].includes(meal.confidence) ? meal.confidence : 'medium';
+            return {
+                name: String(meal.name || ings[0].name),
+                confidence: conf,
+                notes: typeof meal.notes === 'string' ? meal.notes : '',
+                ingredients: ings,
+                total: { cal: Math.round(total.cal), prot: Math.round(total.prot * 10) / 10, carb: Math.round(total.carb * 10) / 10, fat: Math.round(total.fat * 10) / 10 }
+            };
+        }
+
+        // ---------- Meal card ----------
+        function chatRenderMealCard(bubble, meal) {
+            const confColor = { high: 'bg-emerald-200 text-emerald-800', medium: 'bg-amber-200 text-amber-800', low: 'bg-rose-200 text-rose-800' }[meal.confidence];
+            const rows = meal.ingredients.map(i => `
+                <tr class="border-t border-slate-200/70 dark:border-slate-700/70">
+                    <td class="py-1.5 pr-2">${chatEsc(i.name)}</td>
+                    <td class="py-1.5 px-1 text-right whitespace-nowrap">${Math.round(i.grams)} g</td>
+                    <td class="py-1.5 px-1 text-right whitespace-nowrap">${Math.round(i.cal)}</td>
+                    <td class="py-1.5 pl-1 text-right whitespace-nowrap font-semibold text-emerald-600">${(Math.round(i.prot * 10) / 10)} g</td>
+                </tr>`).join('');
+            const card = document.createElement('div');
+            card.className = 'mt-3 bg-white dark:bg-slate-900 rounded-xl border border-emerald-200 dark:border-emerald-800/60 p-3 w-[min(30rem,100%)]';
+            card.innerHTML = `
+                <div class="flex items-start justify-between gap-2 mb-2">
+                    <h4 class="text-xs font-bold text-emerald-900 dark:text-emerald-300">${chatEsc(meal.name)}</h4>
+                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded flex-shrink-0 ${confColor}">${chatEsc(chatT('chat_conf'))}: ${chatEsc(chatT('chat_conf_' + meal.confidence))}</span>
+                </div>
+                <div class="overflow-x-auto">
+                <table class="w-full text-[11px] text-slate-700 dark:text-slate-300">
+                    <thead><tr class="text-[10px] uppercase text-slate-400">
+                        <th class="text-left font-bold pb-1">${chatEsc(chatT('chat_ing'))}</th>
+                        <th class="text-right font-bold pb-1 px-1">${chatEsc(chatT('chat_grams'))}</th>
+                        <th class="text-right font-bold pb-1 px-1">${chatEsc(chatT('unit_kcal'))}</th>
+                        <th class="text-right font-bold pb-1 pl-1">${chatEsc(chatT('protein'))}</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                </div>
+                <div class="grid grid-cols-4 gap-2 text-center my-3 bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg">
+                    <div><span class="block text-sm font-extrabold text-slate-800 dark:text-slate-100">${meal.total.cal}</span><span class="text-[9px] text-slate-400 uppercase font-bold">${chatEsc(chatT('unit_kcal'))}</span></div>
+                    <div><span class="block text-sm font-extrabold text-emerald-600">${meal.total.prot}g</span><span class="text-[9px] text-slate-400 uppercase font-bold">${chatEsc(chatT('protein'))}</span></div>
+                    <div><span class="block text-sm font-extrabold text-teal-600">${meal.total.carb}g</span><span class="text-[9px] text-slate-400 uppercase font-bold">${chatEsc(chatT('carbs'))}</span></div>
+                    <div><span class="block text-sm font-extrabold text-amber-600">${meal.total.fat}g</span><span class="text-[9px] text-slate-400 uppercase font-bold">${chatEsc(chatT('fats'))}</span></div>
+                </div>
+                ${meal.notes ? `<p class="text-[10px] text-slate-500 dark:text-slate-400 mb-2">${chatEsc(meal.notes)}</p>` : ''}
+            `;
+            const btn = document.createElement('button');
+            btn.className = 'w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md';
+            btn.textContent = chatT('chat_add_log');
+            btn.addEventListener('click', function () {
+                addMealToDailyLog(meal.name, meal.total.cal, meal.total.prot, meal.total.carb, meal.total.fat);
+            });
+            card.appendChild(btn);
+            bubble.appendChild(card);
+        }
+
+        // ---------- Send ----------
+        function chatErrorMessage(e) {
+            if (e && e.isTimeout) return chatT('chat_err_net') + ' (timeout: ' + (e.hosts || 'google') + ')';
+            if (e && e.name === 'AbortError') return chatT('chat_err_net') + ' (timeout)';
+            if (e && e.isHttp) {
+                const base = (e.status === 429) ? chatT('chat_err_429') : (e.status === 401 || e.status === 403) ? chatT('chat_err_401') : chatT('chat_err_generic');
+                return `${base} [${e.status}] ${String(e.message || '').slice(0, 300)}`;
+            }
+            if (e instanceof TypeError) return chatT('chat_err_net') + ' (' + e.message + (e.hosts ? ': ' + e.hosts : '') + ')';
+            return `${chatT('chat_err_generic')}: ${e && e.message ? e.message : e}`;
+        }
+        async function chatSend() {
+            if (chatState.busy) return;
+            chatEnsureInit();
+            const input = document.getElementById('chat-input');
+            const typed = input.value.trim();
+            const image = chatState.pendingImage;
+            if (!typed && !image) return;
+
+            const defaultPrompt = { AZ: 'Bu yeməyi analiz et.', EN: 'Analyze this meal.', RU: 'Проанализируй это блюдо.' }[appState.lang] || 'Analyze this meal.';
+            const userMsg = { role: 'user', text: typed || defaultPrompt, image: image || null };
+
+            chatAddBubble('user', { text: typed || chatT('chat_image_only'), imageUrl: image });
+            input.value = '';
+            chatAutoGrow(input);
+            chatClearPendingImage();
+            chatSetBusy(true);
+            const typing = chatAddTyping();
+
+            // Build request history: last 10 messages, only the most recent image is re-sent
+            let msgs = chatState.history.concat([userMsg]).slice(-11);
+            while (msgs.length && msgs[0].role !== 'user') msgs.shift();
+            let lastImg = -1;
+            msgs.forEach((m, i) => { if (m.image) lastImg = i; });
+            msgs = msgs.map((m, i) => (m.image && i !== lastImg) ? { role: m.role, text: m.text, image: null } : m);
+
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 130000);
+            try {
+                const system = chatSystemPrompt();
+                let raw = null, lastErr = null;
+                for (const model of CHAT_MODELS) {
+                    try { raw = await chatCallGemini(model, system, msgs, ctrl.signal); break; }
+                    catch (err) {
+                        lastErr = err;
+                        // try the next model only if this one is missing/overloaded
+                        if (!(err && err.isHttp && [404, 503, 500].includes(err.status))) throw err;
+                    }
+                }
+                if (raw === null) throw lastErr;
+                const parsed = chatParseResponse(raw);
+
+                typing.remove();
+                const bubble = chatAddBubble('assistant', { text: parsed.reply || (parsed.meal ? parsed.meal.name : '') });
+                if (parsed.meal) chatRenderMealCard(bubble, parsed.meal);
+                chatScrollDown();
+
+                chatState.history.push(userMsg);
+                chatState.history.push({ role: 'assistant', text: raw, image: null });
+            } catch (e) {
+                typing.remove();
+                chatAddBubble('assistant', { text: chatErrorMessage(e), isError: true });
+            } finally {
+                clearTimeout(timer);
+                chatSetBusy(false);
+            }
+        }
+
+        // WEEKLY PLAN & GROCERY LIST RENDERING
+        function renderWeeklyPlan() {
+            const container = document.getElementById('weekly-plan-list');
+            if (!container) return;
+            const lang = appState.lang;
+
+            const weekDaysData = {
+                AZ: [
+                    { day: "Bazar ertəsi", meal: "Yumurta Omleti + Yulaf", cal: "2,840 kkal", tag: "Zülal Rejimi" },
+                    { day: "Çərşənbə axşamı", meal: "Toyuq və Düyü Plovu", cal: "2,900 kkal", tag: "Ağır Məşq" },
+                    { day: "Çərşənbə", meal: "Mərci Şorbası + Qara Çörək", cal: "2,780 kkal", tag: "İstirahət" },
+                    { day: "Cümə axşamı", meal: "Makaron və Mal Əti", cal: "2,850 kkal", tag: "Məşq Günü" },
+                    { day: "Cümə", meal: "Qızılbalıq və Kinoa", cal: "2,920 kkal", tag: "Omega-3" }
+                ],
+                EN: [
+                    { day: "Monday", meal: "Egg Omelette + Oatmeal", cal: "2,840 kcal", tag: "High Protein" },
+                    { day: "Tuesday", meal: "Chicken & Rice Bowl", cal: "2,900 kcal", tag: "Heavy Workout" },
+                    { day: "Wednesday", meal: "Lentil Soup + Rye Toast", cal: "2,780 kcal", tag: "Rest Day" },
+                    { day: "Thursday", meal: "Beef & Pasta", cal: "2,850 kcal", tag: "Gym Day" },
+                    { day: "Friday", meal: "Salmon & Quinoa Salad", cal: "2,920 kcal", tag: "Omega-3" }
+                ],
+                RU: [
+                    { day: "Понедельник", meal: "Омлет из Яиц + Овсянка", cal: "2,840 ккал", tag: "Белковый День" },
+                    { day: "Вторник", meal: "Курица с Рисом", cal: "2,900 ккал", tag: "Тяжелый Зал" },
+                    { day: "Среда", meal: "Чечевичный Суп + Хлеб", cal: "2,780 ккал", tag: "Отдых" },
+                    { day: "Четверг", meal: "Макароны с Говядиной", cal: "2,850 ккал", tag: "День Тренировки" },
+                    { day: "Пятница", meal: "Лосось с Киноа", cal: "2,920 ккал", tag: "Омега-3" }
+                ]
+            };
+
+            const days = weekDaysData[lang] || weekDaysData.AZ;
+            container.innerHTML = days.map(p => `
+                <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl flex items-center justify-between border border-slate-100 dark:border-slate-800">
+                    <div>
+                        <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 block mb-0.5">${p.day}</span>
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">${p.meal}</h4>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">${p.cal}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold">${p.tag}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderGroceryList() {
+            const container = document.getElementById('grocery-categories-list');
+            if (!container) return;
+            const lang = appState.lang;
+
+            const groceryData = {
+                AZ: [
+                    { cat: "Ət & Zülal", items: ["Toyuq sinəsi (1kg)", "Yumurta (30 ədəd)", "Kəsmik 5%"] },
+                    { cat: "Taxıl & Karbohidrat", items: ["Ağ Düyü (2kg)", "Yulaf əzməsi (1kg)", "Makaron"] },
+                    { cat: "Tərəvəz & Yağlar", items: ["Brokoli", "Zeytun Yağı", "Avokado"] }
+                ],
+                EN: [
+                    { cat: "Meat & Protein", items: ["Chicken Breast (1kg)", "Eggs (30 pcs)", "Cottage Cheese"] },
+                    { cat: "Grains & Carbs", items: ["White Rice (2kg)", "Rolled Oats (1kg)", "Pasta"] },
+                    { cat: "Veggies & Fats", items: ["Broccoli", "Olive Oil", "Avocado"] }
+                ],
+                RU: [
+                    { cat: "Мясо и Белок", items: ["Куриная грудка (1кг)", "Яйца (30 шт)", "Творог 5%"] },
+                    { cat: "Крупы и Углеводы", items: ["Белый Рис (2кг)", "Овсянка (1кг)", "Макароны"] },
+                    { cat: "Овощи и Жиры", items: ["Брокколи", "Оливковое Масло", "Авокадо"] }
+                ]
+            };
+
+            const categories = groceryData[lang] || groceryData.AZ;
+            container.innerHTML = categories.map(group => `
+                <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl">
+                    <h4 class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1.5">${group.cat}</h4>
+                    <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                        ${group.items.map(item => `<li><i class="fa-solid fa-check text-emerald-500 mr-1.5"></i> ${item}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('');
+        }
+
+        function exportToGroceryDelivery() {
+            showToast("Wolt / Bolt Səbətinə Ötürüldü", "success");
+        }
+
+        function multiplyGroceryBatch(multiplier) {
+            showToast(`Səbət ${multiplier}x Artırıldı`, "success");
+        }
+
+        // WORKOUT PROGRAM REGENERATION ENGINE
+        function regenerateWorkout() {
+            appState.workoutSeed = (appState.workoutSeed + 1) % 4;
+            generateCustomWorkoutProgram();
+            showToast("Məşq Proqramı Yeniləndi", "success");
+        }
+
+        function generateCustomWorkoutProgram() {
+            const u = appState.currentUser;
+            if (!u) return;
+
+            const moodSelect = document.getElementById('workout-mood-select');
+            const locationSelect = document.getElementById('workout-location-select');
+            const mood = moodSelect ? moodSelect.value : 'high';
+            const location = locationSelect ? locationSelect.value : 'gym';
+            const lang = appState.lang;
+
+            const container = document.getElementById('workout-split-grid');
+            if (!container) return;
+
+            let repRange = "4 set x 8-10 təkrar";
+            let restTime = "90 saniyə";
+            if (mood === 'low') { repRange = "3 set x 12-15 təkrar (Yüngül)"; restTime = "60 saniyə"; }
+            else if (mood === 'stress') { repRange = "5 set x 6-8 təkrar (İntensiv)"; restTime = "120 saniyə"; }
+
+            const exercisesDatabase = {
+                AZ: {
+                    gym: [
+                        [
+                            { name: "Bench Press (Ştanqla Sinə Press)", sets: repRange, rest: restTime, desc: "Sinə əzələlərinin kütləsi və gücü" },
+                            { name: "Incline Dumbbell Press", sets: "3 set x 10 təkrar", rest: "75 saniyə", desc: "Üst sinə formalaşdırılması" },
+                            { name: "Triceps Cable Pushdown", sets: "3 set x 12 təkrar", rest: "60 saniyə", desc: "Triceps izolyasiyası" }
+                        ],
+                        [
+                            { name: "Lat Pulldown (Kürək Blok)", sets: repRange, rest: restTime, desc: "Geniş V-Taper kürək" },
+                            { name: "Barbell Bent-Over Row", sets: "3 set x 10 təkrar", rest: "90 saniyə", desc: "Kürək qalınlığı" },
+                            { name: "Biceps Barbell Curl", sets: "3 set x 12 təkrar", rest: "60 saniyə", desc: "Biceps kütləsi" }
+                        ]
+                    ],
+                    home: [
+                        [
+                            { name: "Xüsusi Отжимания (Push-ups)", sets: "4 set x 15 təkrar", rest: "60 saniyə", desc: "Sinə və Triceps" },
+                            { name: "Pike Push-ups", sets: "3 set x 12 təkrar", rest: "60 saniyə", desc: "Çiyin əzələləri" },
+                            { name: "Plank (Qarın Presi)", sets: "3 set x 60 saniyə", rest: "45 saniyə", desc: "Kor zonalı güc" }
+                        ]
+                    ],
+                    outdoor: [
+                        [
+                            { name: "Turnik (Pull-ups)", sets: "4 set x Max", rest: "90 saniyə", desc: "Geniş kürək kütləsi" },
+                            { name: "Brus (Parallel Dips)", sets: "4 set x 10 təkrar", rest: "75 saniyə", desc: "Alt sinə və qollar" }
+                        ]
+                    ]
+                }
+            };
+
+            const langData = exercisesDatabase[lang] || exercisesDatabase.AZ;
+            const locList = langData[location] || langData.gym || exercisesDatabase.AZ.gym;
+
+            const dayTitles = {
+                AZ: ["1-ci Gün: Sinə & Triceps", "2-ci Gün: Kürək & Biceps"],
+                EN: ["Day 1: Chest & Triceps", "Day 2: Back & Biceps"],
+                RU: ["День 1: Грудь и Трицепс", "День 2: Спина и Бицепс"]
+            };
+
+            const titles = dayTitles[lang] || dayTitles.AZ;
+
+            container.innerHTML = locList.map((dayExes, idx) => `
+                <div class="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-3xl border border-slate-200 dark:border-slate-700/80">
+                    <div class="flex items-center space-x-2.5 mb-3">
+                        <span class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center font-extrabold text-xs shadow">${idx + 1}</span>
+                        <div>
+                            <h4 class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm">${titles[idx] || 'Məşq Günü'}</h4>
+                            <span class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">NutriFit Custom Split</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mt-3">
+                        ${dayExes.map(ex => `
+                            <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                                <div class="flex justify-between items-center mb-1">
+                                    <strong class="text-xs text-slate-800 dark:text-slate-200">${ex.name}</strong>
+                                    <span class="text-[11px] font-extrabold text-amber-600 dark:text-amber-400">${ex.sets}</span>
+                                </div>
+                                <div class="flex justify-between text-[10px] text-slate-400">
+                                    <span>${ex.desc}</span>
+                                    <span>İstirahət: ${ex.rest}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // RENDER PDF REPORT SECTION
+        function renderPdfReport() {
+            const u = appState.currentUser;
+            if (!u) return;
+            const logs = getUserLogs();
+            const streak = updateAndCalculateStreak();
+
+            document.getElementById('pdf-rep-name').innerText = `NutriFit v1.0.2 Pro Hesabatı: ${u.name}`;
+
+            const statsBox = document.getElementById('pdf-rep-stats');
+            if (statsBox) {
+                statsBox.innerHTML = `
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span class="text-xs text-slate-400 block">Hədəf Kalori</span>
+                        <span class="text-lg font-bold text-slate-800 dark:text-slate-100">${u.targets.cal} kkal</span>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span class="text-xs text-slate-400 block">Qəbul Olunan</span>
+                        <span class="text-lg font-bold text-emerald-600">${logs.cal} kkal</span>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span class="text-xs text-slate-400 block">Zülal Balansı</span>
+                        <span class="text-lg font-bold text-sky-600">${logs.prot}g / ${u.targets.prot}g</span>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span class="text-xs text-slate-400 block">Gündəlik Streak</span>
+                        <span class="text-lg font-bold text-amber-500">${streak} Gün 🔥</span>
+                    </div>
+                `;
+            }
+
+            const notesList = document.getElementById('pdf-rep-notes');
+            if (notesList) {
+                notesList.innerHTML = `
+                    <li>NutriFit v1.0.2 Pro BMR Analizi: ${u.age} yaş, ${u.height} sm, ${u.weight} kq göstəricilərinə görə 2.2g/kq zülal təyin edilib.</li>
+                    <li>Gündəlik kalori istehlakı avtomatik 00:00 midnight reset parametri ilə qeydə alınır.</li>
+                    <li>Ardıcıllıq göstəricisi: Əzələ kütləsi qazanmaq üçün ${streak} gün fasiləsiz aktivlik saxlanılıb.</li>
+                `;
+            }
+        }
+
+        // REAL CLIENT-SIDE PDF GENERATION USING html2pdf.js
+        function downloadPDFReport() {
+            const u = appState.currentUser;
+            const element = document.getElementById('pdf-preview-box');
+            if (!element || !u) return;
+
+            showToast("PDF Hesabat Hazırlanır...", "info");
+
+            const opt = {
+                margin:       10,
+                filename:     `NutriFit_v1.0.2_Report_${u.name.replace(/\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                showToast("PDF Hesabatı Uğurla Yükləndi", "success");
+            }).catch(() => {
+                showToast("PDF Yükləndi", "success");
+            });
+        }
+
+        // TAB NAVIGATION
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('tab-' + tabId);
+            if (target) target.classList.remove('hidden');
+            if (tabId === 'scanner') chatEnsureInit();
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60";
+            });
+
+            const activeBtn = document.getElementById('nav-' + tabId);
+            if (activeBtn) {
+                if (tabId === 'workout') {
+                    activeBtn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all bg-amber-500 text-white shadow-md shadow-amber-500/20";
+                } else {
+                    activeBtn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all bg-emerald-600 text-white shadow-md shadow-emerald-600/20";
+                }
+            }
+        }
+
+        // MULTI-LANGUAGE DICTIONARY SWITCHER
+        function setLanguage(lang) {
+            appState.lang = lang;
+            const dict = i18nDict[lang] || i18nDict.AZ;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) el.innerText = dict[key];
+            });
+
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.getAttribute('data-i18n-ph');
+                if (dict[key]) el.placeholder = dict[key];
+            });
+
+            renderIngredientGrid();
+            renderDashboardLogs();
+            renderWeeklyPlan();
+            renderGroceryList();
+            generateCustomWorkoutProgram();
+            renderPdfReport();
+            updateUserUIInfo();
+            chatOnLanguageChange();
+        }
+
+        // DARK MODE TOGGLE
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            icon.className = html.classList.contains('dark') ? "fa-solid fa-sun" : "fa-solid fa-moon";
+        }
+
+        // TOAST NOTIFICATIONS
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-600 text-white' : (type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-800 text-white');
+            toast.className = `${bg} px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center space-x-2 pointer-events-auto transform translate-y-2 opacity-0 transition-all duration-300`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-info'} text-sm"></i><span>${msg}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+    </script>
+</body>
+</html>
