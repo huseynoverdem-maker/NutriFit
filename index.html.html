@@ -1189,10 +1189,125 @@
             if (!appState.currentUser) return;
             const email = appState.currentUser.email.toLowerCase();
             localStorage.setItem('nutrifit_daily_logs_' + email, JSON.stringify(logs));
+            schedulePush();
         }
 
         function saveUsersToStorage() {
             localStorage.setItem('nutrifit_registered_users', JSON.stringify(appState.users));
+            schedulePush();
+        }
+
+        // ================= CLOUD ACCOUNTS (cross-device login & sync) =================
+        // Cloudflare Worker URL (see auth-worker.js). Leave '' to keep the old local-only mode.
+        const AUTH_API_URL = 'https://lucky-mode-0daa.huseynoverdem.workers.dev';
+
+        function cloudOn() { return !!AUTH_API_URL; }
+        async function cloudCall(path, body) {
+            const r = await fetch(AUTH_API_URL.replace(/\/$/, '') + path, {
+                method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
+            });
+            let data = {};
+            try { data = await r.json(); } catch (e) {}
+            if (!r.ok) { const err = new Error(data.error || ('http_' + r.status)); err.code = data.error || ''; err.status = r.status; err.data = data; throw err; }
+            return data;
+        }
+        function lockedText(sec) {
+            const min = Math.max(1, Math.ceil((sec || 300) / 60));
+            const m = { AZ: `3 dəfə yanlış parol daxil edildi. ${min} dəqiqə sonra yenidən cəhd edin.`, EN: `Too many wrong attempts. Try again in ${min} minutes.`, RU: `Слишком много неверных попыток. Повторите через ${min} мин.` };
+            return m[appState.lang] || m.AZ;
+        }
+        function leftText(n) {
+            if (typeof n !== 'number') return '';
+            const m = { AZ: ` (${n} cəhdiniz qalıb)`, EN: ` (${n} attempts left)`, RU: ` (осталось попыток: ${n})` };
+            return m[appState.lang] || m.AZ;
+        }
+        function cloudErrText() {
+            const m = { AZ: 'Serverə qoşulmaq mümkün olmadı. İnternet bağlantısını yoxlayın.', EN: 'Could not reach the server. Check your connection.', RU: 'Не удалось подключиться к серверу. Проверьте интернет.' };
+            return m[appState.lang] || m.AZ;
+        }
+        function stripPass(u) { const c = Object.assign({}, u); delete c.password; return c; }
+        function collectState(email) {
+            return {
+                logs: JSON.parse(localStorage.getItem('nutrifit_daily_logs_' + email) || 'null'),
+                lastActive: localStorage.getItem('nutrifit_last_active_date_' + email),
+                streak: localStorage.getItem('nutrifit_streak_count_' + email)
+            };
+        }
+        function applyState(email, st) {
+            if (!st) return;
+            if (st.logs) localStorage.setItem('nutrifit_daily_logs_' + email, JSON.stringify(st.logs));
+            if (st.lastActive) localStorage.setItem('nutrifit_last_active_date_' + email, st.lastActive);
+            if (st.streak != null) localStorage.setItem('nutrifit_streak_count_' + email, String(st.streak));
+        }
+        function upsertLocalUser(user) {
+            const i = appState.users.findIndex(x => x.email.toLowerCase() === user.email.toLowerCase());
+            if (i === -1) appState.users.push(user); else appState.users[i] = user;
+            localStorage.setItem('nutrifit_registered_users', JSON.stringify(appState.users));
+        }
+        function storeSession(res) {
+            localStorage.setItem('nutrifit_cloud_token', res.token);
+            localStorage.setItem('nutrifit_sync_ts', String(res.ts || 0));
+        }
+
+        let _pushTimer = null;
+        function schedulePush() {
+            if (!cloudOn() || !appState.currentUser) return;
+            clearTimeout(_pushTimer);
+            _pushTimer = setTimeout(pushToCloud, 700);
+        }
+        async function pushToCloud() {
+            const u = appState.currentUser, token = localStorage.getItem('nutrifit_cloud_token');
+            if (!cloudOn() || !u || !token) return;
+            const email = u.email.toLowerCase();
+            const body = { email, token, profile: stripPass(u), state: collectState(email) };
+            if (appState._newPass) body.newPassword = appState._newPass;
+            try {
+                const res = await cloudCall('/push', body);
+                appState._newPass = null;
+                localStorage.setItem('nutrifit_sync_ts', String(res.ts));
+            } catch (e) { console.warn('cloud push failed', e); }
+        }
+        // Existing session on this device without a cloud token -> sign in / upload silently
+        async function ensureCloudToken() {
+            const u = appState.currentUser;
+            if (localStorage.getItem('nutrifit_cloud_token') || !u || !u.password) return !!localStorage.getItem('nutrifit_cloud_token');
+            const email = u.email.toLowerCase();
+            try {
+                try { storeSession(await cloudCall('/login', { email, password: u.password })); }
+                catch (e) {
+                    if (e.code !== 'not_found') throw e;
+                    storeSession(await cloudCall('/signup', { email, password: u.password, profile: stripPass(u), state: collectState(email) }));
+                }
+                return true;
+            } catch (e) { return false; }
+        }
+        async function pullFromCloud() {
+            if (!cloudOn() || !appState.currentUser) return;
+            if (!(await ensureCloudToken())) return;
+            const u = appState.currentUser, email = u.email.toLowerCase();
+            try {
+                const res = await cloudCall('/pull', { email, token: localStorage.getItem('nutrifit_cloud_token') });
+                const localTs = parseInt(localStorage.getItem('nutrifit_sync_ts') || '0', 10);
+                if (res.ts > localTs) {
+                    const merged = Object.assign({}, res.profile, { password: u.password });
+                    upsertLocalUser(merged);
+                    applyState(email, res.state);
+                    localStorage.setItem('nutrifit_sync_ts', String(res.ts));
+                    appState.currentUser = merged;
+                    initMainApp();
+                }
+            } catch (e) {
+                if (e.status === 401) handleLogout(); // password changed on another device
+            }
+        }
+        function completeLogin(user) {
+            const dict = i18nDict[appState.lang] || i18nDict.AZ;
+            appState.currentUser = user;
+            localStorage.setItem('nutrifit_active_session', user.email);
+            document.getElementById('auth-modal').classList.add('hidden');
+            initMainApp();
+            showToast(`${dict.tab_login}: ${user.name}`, "success");
+            schedulePush();
         }
 
         // INITIALIZE APP AND PERSISTENCE
@@ -1217,6 +1332,9 @@
             }
 
             renderIngredientGrid();
+
+            pullFromCloud();
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) pullFromCloud(); });
         });
 
         // AUTH TAB SWITCHING
@@ -1237,40 +1355,50 @@
             }
         }
 
-        // STRICT LOGIN SUBMIT HANDLER
-        function handleLoginSubmit(e) {
+        // LOGIN SUBMIT HANDLER (cloud first, local fallback)
+        async function handleLoginSubmit(e) {
             e.preventDefault();
             const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
             const passInput = document.getElementById('login-pass').value;
             const errBox = document.getElementById('login-error-msg');
             const dict = i18nDict[appState.lang] || i18nDict.AZ;
+            const showErr = (t) => { errBox.innerText = t; errBox.classList.remove('hidden'); };
 
             errBox.classList.add('hidden');
+            const localUser = appState.users.find(u => u.email.toLowerCase() === emailInput);
 
-            const foundUser = appState.users.find(u => u.email.toLowerCase() === emailInput);
-
-            if (!foundUser) {
-                errBox.innerText = dict.err_user_not_found;
-                errBox.classList.remove('hidden');
-                return;
+            if (cloudOn()) {
+                try {
+                    const res = await cloudCall('/login', { email: emailInput, password: passInput });
+                    const user = Object.assign({}, res.profile, { password: passInput });
+                    upsertLocalUser(user);
+                    applyState(emailInput, res.state);
+                    storeSession(res);
+                    return completeLogin(user);
+                } catch (err) {
+                    if (err.code === 'locked') return showErr(lockedText(err.data && err.data.retryAfter));
+                    if (err.code === 'wrong_pass') return showErr(dict.err_wrong_pass + leftText(err.data && err.data.left));
+                    if (err.code === 'not_found') {
+                        if (localUser && localUser.password === passInput) {
+                            // old device-only account: upload it to the cloud
+                            try { storeSession(await cloudCall('/signup', { email: emailInput, password: passInput, profile: stripPass(localUser), state: collectState(emailInput) })); } catch (e2) {}
+                            return completeLogin(localUser);
+                        }
+                        return showErr(dict.err_user_not_found);
+                    }
+                    // network problem: allow offline login with the local copy
+                    if (localUser && localUser.password === passInput) return completeLogin(localUser);
+                    return showErr(cloudErrText());
+                }
             }
 
-            if (foundUser.password !== passInput) {
-                errBox.innerText = dict.err_wrong_pass;
-                errBox.classList.remove('hidden');
-                return;
-            }
-
-            // SUCCESSFUL LOGIN
-            appState.currentUser = foundUser;
-            localStorage.setItem('nutrifit_active_session', foundUser.email);
-            document.getElementById('auth-modal').classList.add('hidden');
-            initMainApp();
-            showToast(`${dict.tab_login}: ${foundUser.name}`, "success");
+            if (!localUser) return showErr(dict.err_user_not_found);
+            if (localUser.password !== passInput) return showErr(dict.err_wrong_pass);
+            completeLogin(localUser);
         }
 
         // STRICT SIGNUP SUBMIT HANDLER
-        function handleSignupSubmit(e) {
+        async function handleSignupSubmit(e) {
             e.preventDefault();
             const dict = i18nDict[appState.lang] || i18nDict.AZ;
             const name = document.getElementById('signup-name').value.trim();
@@ -1313,18 +1441,30 @@
                 avatar: '', bmr: metrics.bmr, tdee: metrics.tdee, targets: metrics.targets
             };
 
+            if (cloudOn()) {
+                try {
+                    storeSession(await cloudCall('/signup', { email, password: pass, profile: stripPass(newUser), state: null }));
+                } catch (err) {
+                    errBox.innerText = err.code === 'exists' ? dict.err_email_exists : cloudErrText();
+                    errBox.classList.remove('hidden');
+                    return;
+                }
+            }
+
             appState.users.push(newUser);
-            saveUsersToStorage();
+            localStorage.setItem('nutrifit_registered_users', JSON.stringify(appState.users));
 
             appState.currentUser = newUser;
             localStorage.setItem('nutrifit_active_session', newUser.email);
             document.getElementById('auth-modal').classList.add('hidden');
             initMainApp();
             showToast(dict.btn_signup, "success");
+            schedulePush();
         }
 
         function handleLogout() {
             localStorage.removeItem('nutrifit_active_session');
+            localStorage.removeItem('nutrifit_cloud_token');
             appState.currentUser = null;
             closeProfileModal();
             document.getElementById('auth-modal').classList.remove('hidden');
@@ -1568,6 +1708,7 @@
             }
 
             u.password = newPass;
+            appState._newPass = newPass;
             const idx = appState.users.findIndex(usr => usr.email === u.email);
             if (idx !== -1) appState.users[idx].password = newPass;
 
