@@ -2670,5 +2670,472 @@ RULES:
             }, 3200);
         }
     </script>
+    <script>
+        /* NutriFit add-on: Feedback + Community + Admin panel + Email password reset
+   Paste inside a NEW <script> ... </script> right before </body> (after the existing script). */
+(function () {
+  'use strict';
+  if (typeof AUTH_API_URL === 'undefined' || !AUTH_API_URL) return;
+  const API = AUTH_API_URL.replace(/\/$/, '');
+
+  // ---------- i18n (RU falls back to EN) ----------
+  const L = {
+    AZ: {
+      community: 'Community', feedback: 'Geri Dönüş', admin: 'Admin Panel',
+      community_desc: 'Digər istifadəçilərin paylaşdığı reseptlər. Öz reseptinizi AI çatbotdan və ya soyuducu bölməsindən paylaşın.',
+      newest: 'Yeni', top: 'Populyar', more: 'Daha çox', empty: 'Hələ paylaşım yoxdur. İlk paylaşan siz olun!',
+      share: 'Community-də paylaş', share_title: 'Reseptini paylaş', share_note: 'Qeyd (istəyə bağlı)…', share_btn: 'Paylaş',
+      share_hint: 'Paylaşımda yalnız adınız və reseptin tərkibi görünəcək.', shared: 'Paylaşıldı!',
+      add_log: 'Gündəliyə əlavə et', report: 'Şikayət et', report_reason: 'Şikayət səbəbi (qısa):', reported: 'Şikayət göndərildi',
+      del: 'Sil', confirm_del: 'Paylaşım silinsin?', comment_ph: 'Şərh yaz…', send: 'Göndər', ingredients: 'Tərkib', steps: 'Hazırlanma',
+      fb_title: 'Geri Dönüş', fb_desc: 'Təklif, xəta və ya fikirlərinizi yazın. Cavab verildikdə e-poçtunuza da gələcək.',
+      fb_bug: '🐞 Xəta', fb_idea: '💡 Təklif', fb_praise: '👍 Təşəkkür', fb_other: '💬 Digər',
+      fb_ph: 'Mesajınızı yazın…', fb_send: 'Göndər', fb_sent: 'Geri dönüşünüz göndərildi. Təşəkkürlər!', fb_mine: 'Mənim müraciətlərim',
+      fb_none: 'Hələ müraciətiniz yoxdur.', fb_reply: 'Cavab', fb_new: 'Gözləyir', fb_seen: 'Baxıldı', fb_replied: 'Cavablandı',
+      forgot: 'Parolu unutmusunuz?', forgot_title: 'Parolun bərpası', forgot_desc: 'E-poçt ünvanınızı yazın, parol yeniləmə linki göndərək.',
+      send_link: 'Link göndər', link_sent: 'Əgər bu e-poçt qeydiyyatlıdırsa, parol yeniləmə linki göndərildi. Qutunu (və spam-ı) yoxlayın.',
+      reset_title: 'Yeni parol təyin et', new_pass: 'Yeni parol', confirm_pass: 'Yeni parolun təkrarı', save: 'Təsdiqlə',
+      pass_mismatch: 'Parollar üst-üstə düşmür!', pass_short: 'Parol ən azı 6 simvol olmalıdır.',
+      reset_ok: 'Parol dəyişdirildi. İndi yeni parolla daxil olun.', reset_bad: 'Link etibarsızdır və ya vaxtı bitib. Yenidən sorğu göndərin.',
+      pass_info: 'Parol dəyişmək üçün e-poçtunuza təsdiq linki göndəriləcək. Düyməyə basın və məktubdakı linkə keçin.',
+      err: 'Xəta baş verdi', err_login: 'Əvvəlcə hesaba daxil olun (yenidən giriş edin).', err_rate: 'Gündəlik limit dolub, sonra yenidən cəhd edin.',
+      err_short: 'Mətn çox qısadır.', author: 'Müəllif', mail_off: 'E-poçt xidməti hələ qurulmayıb.'
+    },
+    EN: {
+      community: 'Community', feedback: 'Feedback', admin: 'Admin Panel',
+      community_desc: 'Recipes shared by other users. Share yours from the AI chatbot or the fridge section.',
+      newest: 'New', top: 'Top', more: 'Load more', empty: 'Nothing shared yet. Be the first!',
+      share: 'Share to Community', share_title: 'Share your recipe', share_note: 'Note (optional)…', share_btn: 'Share',
+      share_hint: 'Only your first name and the recipe contents will be visible.', shared: 'Shared!',
+      add_log: 'Add to my log', report: 'Report', report_reason: 'Reason (short):', reported: 'Report sent',
+      del: 'Delete', confirm_del: 'Delete this post?', comment_ph: 'Write a comment…', send: 'Send', ingredients: 'Ingredients', steps: 'Steps',
+      fb_title: 'Feedback', fb_desc: 'Tell us about bugs, ideas or thoughts. Replies also arrive by email.',
+      fb_bug: '🐞 Bug', fb_idea: '💡 Idea', fb_praise: '👍 Praise', fb_other: '💬 Other',
+      fb_ph: 'Write your message…', fb_send: 'Send', fb_sent: 'Feedback sent. Thank you!', fb_mine: 'My submissions',
+      fb_none: 'No submissions yet.', fb_reply: 'Reply', fb_new: 'Pending', fb_seen: 'Seen', fb_replied: 'Answered',
+      forgot: 'Forgot password?', forgot_title: 'Password recovery', forgot_desc: 'Enter your email and we will send a reset link.',
+      send_link: 'Send link', link_sent: 'If this email is registered, a reset link was sent. Check your inbox (and spam).',
+      reset_title: 'Set a new password', new_pass: 'New password', confirm_pass: 'Repeat new password', save: 'Confirm',
+      pass_mismatch: 'Passwords do not match!', pass_short: 'Password must be at least 6 characters.',
+      reset_ok: 'Password changed. Please sign in with the new password.', reset_bad: 'Link is invalid or expired. Request a new one.',
+      pass_info: 'To change your password we will email you a confirmation link. Press the button and follow the link.',
+      err: 'Something went wrong', err_login: 'Please sign in again first.', err_rate: 'Daily limit reached, try again later.',
+      err_short: 'Text is too short.', author: 'Author', mail_off: 'Email service is not configured yet.'
+    }
+  };
+  const t = (k) => { const l = (typeof appState !== 'undefined' && appState.lang) || 'AZ'; return (L[l] && L[l][k]) || L.EN[k] || L.AZ[k] || k; };
+
+  // ---------- utils ----------
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const tok = () => localStorage.getItem('nutrifit_cloud_token') || '';
+  const fmt = (ts) => { try { return new Date(ts).toLocaleString({ AZ: 'az', RU: 'ru' }[appState.lang] || 'en', { dateStyle: 'short', timeStyle: 'short' }); } catch (e) { return ''; } };
+  const INP = 'w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs outline-none focus:ring-2 focus:ring-emerald-500';
+  const BTN = 'px-4 py-2.5 rounded-xl text-xs font-bold transition';
+  const GREEN = BTN + ' bg-emerald-600 hover:bg-emerald-700 text-white';
+  const GRAY = BTN + ' bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200';
+  const CARD = 'bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm';
+  const state = { isAdmin: false, sort: 'new', offset: 0, posts: {}, fbRating: 0, admView: 'stats' };
+
+  async function api(path, body) {
+    const r = await fetch(API + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ token: tok(), email: (appState.currentUser && appState.currentUser.email) || undefined }, body || {})) });
+    let d = {}; try { d = await r.json(); } catch (e) {}
+    if (!r.ok) { const e = new Error(d.error || ('http_' + r.status)); e.code = d.error; e.status = r.status; e.data = d; throw e; }
+    return d;
+  }
+  function errText(e) {
+    if (e.code === 'rate_limited') return t('err_rate');
+    if (e.code === 'unauthorized' || e.status === 401) return t('err_login');
+    if (e.code === 'too_short') return t('err_short');
+    if (e.code === 'mail_not_configured') return t('mail_off');
+    return t('err') + ' (' + (e.code || e.message) + ')';
+  }
+
+  // ---------- generic modal ----------
+  function closeModal() { const m = $('ft-modal'); if (m) m.remove(); }
+  function modal(title, inner) {
+    closeModal();
+    const o = document.createElement('div');
+    o.id = 'ft-modal';
+    o.className = 'fixed inset-0 z-[290] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4';
+    o.innerHTML = '<div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 max-h-[90vh] overflow-y-auto relative">' +
+      '<button type="button" data-close class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>' +
+      '<h3 class="text-base font-bold text-slate-800 dark:text-slate-100 pr-8">' + title + '</h3>' + inner + '</div>';
+    o.addEventListener('mousedown', (e) => { if (e.target === o || e.target.closest('[data-close]')) closeModal(); });
+    document.body.appendChild(o);
+    return o;
+  }
+
+  // ---------- password reset (forgot + reset page) ----------
+  function openForgot() {
+    modal(t('forgot_title'), '<p class="text-xs text-slate-500">' + t('forgot_desc') + '</p>' +
+      '<input id="ft-fg-email" type="email" class="' + INP + '" placeholder="email@mail.com">' +
+      '<div id="ft-fg-msg" class="hidden text-xs font-bold text-emerald-600"></div>' +
+      '<button id="ft-fg-send" class="' + GREEN + ' w-full">' + t('send_link') + '</button>');
+    const em = $('ft-fg-email');
+    em.value = (($('login-email') || {}).value || (appState.currentUser && appState.currentUser.email) || '').trim();
+    $('ft-fg-send').onclick = async () => {
+      const email = em.value.trim().toLowerCase();
+      if (!email) return;
+      $('ft-fg-send').disabled = true;
+      try { await api('/forgot', { email, lang: appState.lang }); const m = $('ft-fg-msg'); m.textContent = t('link_sent'); m.classList.remove('hidden'); }
+      catch (e) { showToast(errText(e), 'error'); }
+      $('ft-fg-send').disabled = false;
+    };
+  }
+  function openReset(resetToken) {
+    modal(t('reset_title'),
+      '<input id="ft-rs-1" type="password" class="' + INP + '" placeholder="' + t('new_pass') + '">' +
+      '<input id="ft-rs-2" type="password" class="' + INP + '" placeholder="' + t('confirm_pass') + '">' +
+      '<div id="ft-rs-msg" class="hidden text-xs font-bold text-rose-600"></div>' +
+      '<button id="ft-rs-go" class="' + GREEN + ' w-full">' + t('save') + '</button>');
+    $('ft-rs-go').onclick = async () => {
+      const p1 = $('ft-rs-1').value, p2 = $('ft-rs-2').value, msg = $('ft-rs-msg');
+      const bad = (x) => { msg.textContent = x; msg.classList.remove('hidden'); };
+      if (p1.length < 6) return bad(t('pass_short'));
+      if (p1 !== p2) return bad(t('pass_mismatch'));
+      try {
+        await api('/reset', { resetToken, password: p1 });
+        history.replaceState(null, '', location.pathname + location.search);
+        closeModal();
+        if (appState.currentUser) handleLogout();
+        localStorage.removeItem('nutrifit_cloud_token');
+        if (typeof switchAuthTab === 'function') switchAuthTab('login');
+        $('auth-modal').classList.remove('hidden');
+        showToast(t('reset_ok'), 'success');
+      } catch (e) { bad(e.code === 'invalid_token' ? t('reset_bad') : errText(e)); }
+    };
+  }
+  function checkResetHash() {
+    const m = /^#reset=([a-f0-9]{64})$/.exec(location.hash);
+    if (m) openReset(m[1]);
+  }
+  // Profile modal: replace old-password form with email-link flow
+  saveNewPassword = async function () {
+    const u = appState.currentUser; if (!u) return;
+    try { await api('/forgot', { email: u.email, lang: appState.lang }); showToast(t('link_sent'), 'success'); }
+    catch (e) { showToast(errText(e), 'error'); }
+  };
+
+  // ---------- DOM injection ----------
+  function navBtn(id, icon) {
+    return '<button onclick="switchTab(\'' + id + '\')" id="nav-' + id + '" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60' + (id === 'admin' ? ' hidden' : '') + '"><i class="fa-solid ' + icon + ' w-5 text-center text-sm"></i><span data-ft="' + id + '"></span></button>';
+  }
+  function mnavBtn(id, icon) {
+    return '<button onclick="switchTab(\'' + id + '\')" id="mnav-' + id + '" class="mobile-nav-btn flex flex-col items-center p-1 text-slate-400' + (id === 'admin' ? ' hidden' : '') + '"><i class="fa-solid ' + icon + ' text-lg"></i><span class="text-[10px] font-bold mt-0.5" data-ft="' + id + '"></span></button>';
+  }
+  function inject() {
+    const sideNav = document.querySelector('aside nav');
+    if (sideNav) sideNav.insertAdjacentHTML('beforeend', navBtn('community', 'fa-users') + navBtn('feedback', 'fa-comment-dots') + navBtn('admin', 'fa-user-shield'));
+    const mNav = document.querySelector('nav.fixed.bottom-0');
+    if (mNav) mNav.insertAdjacentHTML('beforeend', mnavBtn('community', 'fa-users') + mnavBtn('feedback', 'fa-comment-dots') + mnavBtn('admin', 'fa-user-shield'));
+    const main = document.querySelector('main');
+    ['community', 'feedback', 'admin'].forEach((id) => {
+      const d = document.createElement('div'); d.id = 'tab-' + id; d.className = 'tab-content hidden space-y-6'; main.appendChild(d);
+    });
+    const lf = $('form-login');
+    if (lf) lf.insertAdjacentHTML('beforeend', '<button type="button" id="ft-forgot-link" class="w-full text-center text-xs font-bold text-emerald-600 hover:underline"></button>');
+    $('ft-forgot-link').onclick = openForgot;
+    const passH = document.querySelector('[data-i18n="pass_change_title"]');
+    if (passH) {
+      ['prof-old-pass', 'prof-new-pass', 'prof-confirm-new-pass'].forEach((id) => { const e = $(id); if (e) e.classList.add('hidden'); });
+      passH.insertAdjacentHTML('afterend', '<p id="ft-pass-info" class="text-[11px] text-slate-500"></p>');
+    }
+    applyLabels();
+  }
+  function applyLabels() {
+    document.querySelectorAll('[data-ft]').forEach((e) => { e.textContent = t(e.getAttribute('data-ft')); });
+    const f = $('ft-forgot-link'); if (f) f.textContent = t('forgot');
+    const pi = $('ft-pass-info'); if (pi) pi.textContent = t('pass_info');
+    renderCommunityShell(); renderFeedbackShell();
+  }
+  function toggleAdminUI() {
+    ['nav-admin', 'mnav-admin'].forEach((id) => { const e = $(id); if (e) e.classList.toggle('hidden', !state.isAdmin); });
+  }
+  async function refreshMe() {
+    if (!tok()) return;
+    try { const m = await api('/me'); state.isAdmin = !!m.isAdmin; } catch (e) { if (e.status === 401 || e.status === 403) state.isAdmin = false; }
+    toggleAdminUI();
+  }
+
+  // ---------- FEEDBACK ----------
+  function renderFeedbackShell() {
+    const host = $('tab-feedback'); if (!host) return;
+    const stars = [1, 2, 3, 4, 5].map((n) => '<button type="button" data-r="' + n + '" class="fb-star text-xl text-slate-300 hover:text-amber-400">★</button>').join('');
+    host.innerHTML = '<div class="' + CARD + ' max-w-2xl mx-auto w-full space-y-3">' +
+      '<h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">' + t('fb_title') + '</h2><p class="text-xs text-slate-500">' + t('fb_desc') + '</p>' +
+      '<select id="fb-cat" class="' + INP + '"><option value="idea">' + t('fb_idea') + '</option><option value="bug">' + t('fb_bug') + '</option><option value="praise">' + t('fb_praise') + '</option><option value="other">' + t('fb_other') + '</option></select>' +
+      '<div id="fb-stars" class="flex items-center gap-1">' + stars + '</div>' +
+      '<textarea id="fb-msg" rows="5" maxlength="2000" class="' + INP + '" placeholder="' + t('fb_ph') + '"></textarea>' +
+      '<button id="fb-send" class="' + GREEN + '">' + t('fb_send') + '</button></div>' +
+      '<div class="' + CARD + ' max-w-2xl mx-auto w-full"><h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 mb-3">' + t('fb_mine') + '</h3><div id="fb-list" class="space-y-3"></div></div>';
+    paintStars();
+    $('fb-stars').onclick = (e) => { const b = e.target.closest('.fb-star'); if (!b) return; state.fbRating = state.fbRating === +b.dataset.r ? 0 : +b.dataset.r; paintStars(); };
+    $('fb-send').onclick = async () => {
+      const message = $('fb-msg').value.trim();
+      if (message.length < 5) return showToast(t('err_short'), 'error');
+      $('fb-send').disabled = true;
+      try { await api('/feedback', { category: $('fb-cat').value, rating: state.fbRating, message }); $('fb-msg').value = ''; state.fbRating = 0; paintStars(); showToast(t('fb_sent'), 'success'); loadMyFeedback(); }
+      catch (e) { showToast(errText(e), 'error'); }
+      $('fb-send').disabled = false;
+    };
+  }
+  function paintStars() {
+    document.querySelectorAll('.fb-star').forEach((b) => { b.classList.toggle('text-amber-400', +b.dataset.r <= state.fbRating); b.classList.toggle('text-slate-300', +b.dataset.r > state.fbRating); });
+  }
+  async function loadMyFeedback() {
+    const box = $('fb-list'); if (!box) return;
+    try {
+      const { items } = await api('/feedback/mine');
+      const stCls = { new: 'bg-amber-100 text-amber-700', seen: 'bg-slate-200 text-slate-700', replied: 'bg-emerald-100 text-emerald-700' };
+      box.innerHTML = items.length ? items.map((f) =>
+        '<div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs space-y-1.5">' +
+        '<div class="flex justify-between items-center"><span class="text-slate-400">' + fmt(f.created) + (f.rating ? ' · ' + '★'.repeat(f.rating) : '') + '</span><span class="px-2 py-0.5 rounded-md font-bold ' + (stCls[f.status] || '') + '">' + t('fb_' + f.status) + '</span></div>' +
+        '<p class="text-slate-700 dark:text-slate-200 whitespace-pre-wrap">' + esc(f.message) + '</p>' +
+        (f.reply ? '<div class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200"><b>' + t('fb_reply') + ':</b> <span class="whitespace-pre-wrap">' + esc(f.reply) + '</span></div>' : '') + '</div>'
+      ).join('') : '<p class="text-xs text-slate-400 italic">' + t('fb_none') + '</p>';
+    } catch (e) { box.innerHTML = '<p class="text-xs text-rose-500">' + esc(errText(e)) + '</p>'; }
+  }
+
+  // ---------- COMMUNITY ----------
+  function renderCommunityShell() {
+    const host = $('tab-community'); if (!host) return;
+    host.innerHTML = '<div class="' + CARD + '"><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">' + t('community') + '</h2><p class="text-xs text-slate-500 max-w-xl">' + t('community_desc') + '</p></div>' +
+      '<div class="flex gap-1.5"><button id="cm-s-new" class="' + BTN + '">' + t('newest') + '</button><button id="cm-s-top" class="' + BTN + '">' + t('top') + '</button></div></div></div>' +
+      '<div id="cm-list" class="space-y-4 max-w-3xl w-full mx-auto"></div><div class="text-center"><button id="cm-more" class="' + GRAY + ' hidden">' + t('more') + '</button></div>';
+    $('cm-s-new').onclick = () => { state.sort = 'new'; loadPosts(true); };
+    $('cm-s-top').onclick = () => { state.sort = 'top'; loadPosts(true); };
+    $('cm-more').onclick = () => loadPosts(false);
+    $('cm-list').onclick = onCardClick;
+    paintSort();
+  }
+  function paintSort() {
+    const on = ' bg-emerald-600 text-white', off = ' bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+    if ($('cm-s-new')) { $('cm-s-new').className = BTN + (state.sort === 'new' ? on : off); $('cm-s-top').className = BTN + (state.sort === 'top' ? on : off); }
+  }
+  function cardHtml(p) {
+    state.posts[p.id] = p;
+    const d = p.data || {}, tot = d.total || {};
+    const ings = (d.ingredients || []).map((i) => '<li class="flex justify-between gap-2"><span>' + esc(i.name) + (i.grams ? ' · ' + Math.round(i.grams) + 'g' : '') + '</span><span class="text-slate-400 whitespace-nowrap">' + Math.round(i.cal) + ' kkal · ' + i.prot + 'g</span></li>').join('');
+    const steps = (d.steps || []).map((s, i) => '<li class="mb-1"><b class="text-emerald-600">' + (i + 1) + '.</b> ' + esc(s) + '</li>').join('');
+    const act = 'text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-emerald-600 flex items-center gap-1';
+    return '<article data-pid="' + p.id + '" class="' + CARD + '">' +
+      '<div class="flex items-start justify-between gap-3"><div class="min-w-0"><h3 class="text-base font-bold text-slate-800 dark:text-slate-100 break-words">' + esc(p.title) + '</h3>' +
+      '<p class="text-[11px] text-slate-400">' + esc(p.author) + ' · ' + fmt(p.created) + '</p></div>' +
+      '<span class="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 whitespace-nowrap">' + (p.kind === 'fridge' ? '🧊' : '📷') + '</span></div>' +
+      '<div class="grid grid-cols-4 gap-2 text-center bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-2xl my-3 text-xs font-bold">' +
+      '<div><span class="block text-slate-800 dark:text-slate-100">' + tot.cal + '</span><span class="text-[9px] text-slate-400 uppercase">kkal</span></div>' +
+      '<div><span class="block text-emerald-600">' + tot.prot + 'g</span><span class="text-[9px] text-slate-400 uppercase">P</span></div>' +
+      '<div><span class="block text-teal-600">' + tot.carb + 'g</span><span class="text-[9px] text-slate-400 uppercase">C</span></div>' +
+      '<div><span class="block text-amber-600">' + tot.fat + 'g</span><span class="text-[9px] text-slate-400 uppercase">F</span></div></div>' +
+      (d.notes ? '<p class="text-xs text-slate-600 dark:text-slate-300 mb-2 whitespace-pre-wrap">' + esc(d.notes) + '</p>' : '') +
+      '<details class="text-xs text-slate-600 dark:text-slate-300 mb-3"><summary class="cursor-pointer font-bold text-emerald-600">' + t('ingredients') + (steps ? ' / ' + t('steps') : '') + '</summary><ul class="mt-2 space-y-1">' + ings + '</ul>' + (steps ? '<ol class="mt-3 list-none">' + steps + '</ol>' : '') + '</details>' +
+      '<div class="flex flex-wrap items-center gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">' +
+      '<button data-act="like" class="' + act + (p.liked ? ' !text-rose-500' : '') + '"><i class="fa-' + (p.liked ? 'solid' : 'regular') + ' fa-heart"></i><span class="lk">' + p.likes + '</span></button>' +
+      '<button data-act="comments" class="' + act + '"><i class="fa-regular fa-comment"></i><span>' + p.comments + '</span></button>' +
+      '<button data-act="log" class="' + act + '"><i class="fa-solid fa-plus"></i>' + t('add_log') + '</button>' +
+      '<span class="flex-1"></span>' +
+      (p.mine ? '<button data-act="delete" class="' + act + ' hover:!text-rose-500"><i class="fa-solid fa-trash"></i></button>' : '<button data-act="report" class="' + act + '" title="' + t('report') + '"><i class="fa-regular fa-flag"></i></button>') + '</div>' +
+      '<div class="cm-comments hidden mt-3 space-y-2"></div></article>';
+  }
+  async function loadPosts(reset) {
+    const list = $('cm-list'); if (!list) return;
+    if (reset) { state.offset = 0; list.innerHTML = ''; paintSort(); }
+    try {
+      const { items } = await api('/community/list', { sort: state.sort, offset: state.offset });
+      list.insertAdjacentHTML('beforeend', items.map(cardHtml).join(''));
+      state.offset += items.length;
+      $('cm-more').classList.toggle('hidden', items.length < 20);
+      if (!list.children.length) list.innerHTML = '<p class="text-center text-xs text-slate-400 italic py-10">' + t('empty') + '</p>';
+    } catch (e) { list.innerHTML = '<p class="text-center text-xs text-rose-500 py-6">' + esc(errText(e)) + '</p>'; }
+  }
+  async function loadComments(art) {
+    const id = art.dataset.pid, box = art.querySelector('.cm-comments');
+    const { items } = await api('/community/comments', { id });
+    box.innerHTML = items.map((c) => '<div class="text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60"><b class="text-slate-700 dark:text-slate-200">' + esc(c.author) + '</b> <span class="text-slate-400 text-[10px]">' + fmt(c.created) + '</span><p class="text-slate-600 dark:text-slate-300 whitespace-pre-wrap break-words">' + esc(c.body) + '</p></div>').join('') +
+      '<div class="flex gap-2"><input maxlength="500" class="cm-in ' + INP + '" placeholder="' + t('comment_ph') + '"><button data-act="send-comment" class="' + GREEN + '">' + t('send') + '</button></div>';
+  }
+  async function onCardClick(e) {
+    const btn = e.target.closest('[data-act]'); if (!btn) return;
+    const art = btn.closest('article'), id = art.dataset.pid, p = state.posts[id], act = btn.dataset.act;
+    try {
+      if (act === 'like') {
+        const r = await api('/community/like', { id });
+        p.liked = r.liked; p.likes = r.likes;
+        btn.querySelector('.lk').textContent = r.likes;
+        btn.classList.toggle('!text-rose-500', r.liked);
+        btn.querySelector('i').className = 'fa-' + (r.liked ? 'solid' : 'regular') + ' fa-heart';
+      } else if (act === 'comments') {
+        const box = art.querySelector('.cm-comments');
+        if (box.classList.contains('hidden')) { box.classList.remove('hidden'); await loadComments(art); } else box.classList.add('hidden');
+      } else if (act === 'send-comment') {
+        const inp = art.querySelector('.cm-in'), body = inp.value.trim(); if (!body) return;
+        await api('/community/comment', { id, body }); await loadComments(art);
+      } else if (act === 'log') {
+        const tot = p.data.total; addMealToDailyLog(p.title, tot.cal, tot.prot, tot.carb, tot.fat);
+      } else if (act === 'report') {
+        const reason = prompt(t('report_reason')); if (reason === null) return;
+        await api('/community/report', { id, reason }); showToast(t('reported'), 'success');
+      } else if (act === 'delete') {
+        if (!confirm(t('confirm_del'))) return;
+        await api('/community/delete', { id }); art.remove();
+      }
+    } catch (err) { showToast(errText(err), 'error'); }
+  }
+
+  // Share modal + hooks into chatbot and fridge recipe
+  function openShare(p) {
+    modal(t('share_title'),
+      '<input id="ft-sh-title" maxlength="80" class="' + INP + '" value="' + esc(p.title) + '">' +
+      '<textarea id="ft-sh-notes" rows="3" maxlength="500" class="' + INP + '" placeholder="' + t('share_note') + '"></textarea>' +
+      '<p class="text-[11px] text-slate-400">' + t('share_hint') + '</p><button id="ft-sh-go" class="' + GREEN + ' w-full">' + t('share_btn') + '</button>');
+    $('ft-sh-go').onclick = async () => {
+      const data = Object.assign({}, p.data, { notes: $('ft-sh-notes').value.trim() || p.data.notes || '' });
+      $('ft-sh-go').disabled = true;
+      try { await api('/community/post', { title: $('ft-sh-title').value.trim(), kind: p.kind, data }); closeModal(); showToast(t('shared'), 'success'); switchTab('community'); }
+      catch (e) { showToast(errText(e), 'error'); $('ft-sh-go').disabled = false; }
+    };
+  }
+  const SHARE_CLS = 'w-full mt-2 py-2 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-xl text-xs font-bold hover:bg-teal-100 transition';
+  const _crm = chatRenderMealCard;
+  chatRenderMealCard = function (bubble, meal) {
+    _crm(bubble, meal);
+    const card = bubble.lastElementChild; if (!card) return;
+    const b = document.createElement('button'); b.className = SHARE_CLS; b.innerHTML = '<i class="fa-solid fa-share-nodes mr-1"></i>' + t('share');
+    b.onclick = () => openShare({ kind: 'scan', title: meal.name, data: { ingredients: meal.ingredients, notes: meal.notes || '', steps: [] } });
+    card.appendChild(b);
+  };
+  const _grf = generateRecipeFromFridge;
+  generateRecipeFromFridge = function () {
+    if (!appState.selectedIngs.length) return _grf();
+    _grf();
+    const card = $('generated-recipes-container').firstElementChild; if (!card) return;
+    const title = (card.querySelector('h3') || {}).textContent || 'Recipe';
+    const cb = card.querySelector('button[onclick^="openCookingModal"]');
+    let steps = [];
+    if (cb) { const m = /(\[.*\])\)\s*$/s.exec(cb.getAttribute('onclick')); if (m) { try { steps = JSON.parse(m[1]); } catch (e) {} } }
+    const ings = appState.selectedIngs.map((id) => ingredientsDatabase.find((i) => i.id === id)).filter(Boolean)
+      .map((i) => ({ name: i.name[appState.lang] || i.name.AZ, grams: 100, cal: i.cal, prot: i.prot, carb: i.carb, fat: i.fat }));
+    const b = document.createElement('button'); b.className = SHARE_CLS; b.innerHTML = '<i class="fa-solid fa-share-nodes mr-1"></i>' + t('share');
+    b.onclick = () => openShare({ kind: 'fridge', title, data: { ingredients: ings, steps, notes: '' } });
+    card.appendChild(b);
+  };
+
+  // ---------- ADMIN PANEL ----------
+  const adm = () => $('adm-body');
+  function renderAdminShell() {
+    const host = $('tab-admin'); if (!host) return;
+    const tabs = [['stats', 'Statistika'], ['feedback', 'Geri dönüşlər'], ['users', 'İstifadəçilər'], ['posts', 'Community']];
+    host.innerHTML = '<div class="' + CARD + '"><div class="flex flex-wrap items-center justify-between gap-3"><h2 class="text-xl font-bold text-slate-800 dark:text-slate-100"><i class="fa-solid fa-user-shield text-emerald-600 mr-2"></i>Admin Panel</h2>' +
+      '<div id="adm-tabs" class="flex flex-wrap gap-1.5">' + tabs.map((x) => '<button data-v="' + x[0] + '" class="' + BTN + '">' + x[1] + '</button>').join('') + '</div></div></div><div id="adm-body" class="space-y-4"></div>';
+    $('adm-tabs').onclick = (e) => { const b = e.target.closest('[data-v]'); if (b) { state.admView = b.dataset.v; admLoad(); } };
+    adm().onclick = onAdminClick;
+    admLoad();
+  }
+  function admPaint() {
+    document.querySelectorAll('#adm-tabs [data-v]').forEach((b) => {
+      b.className = BTN + (b.dataset.v === state.admView ? ' bg-emerald-600 text-white' : ' bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300');
+    });
+  }
+  async function admLoad() {
+    admPaint();
+    const body = adm(); if (!body) return;
+    body.innerHTML = '<p class="text-xs text-slate-400">…</p>';
+    try {
+      if (state.admView === 'stats') await admStats();
+      else if (state.admView === 'feedback') await admFeedback();
+      else if (state.admView === 'users') await admUsers();
+      else await admPosts();
+    } catch (e) { body.innerHTML = '<p class="text-xs text-rose-500">' + esc(errText(e)) + '</p>'; }
+  }
+  async function admStats() {
+    const s = await api('/admin/stats');
+    const card = (label, val, cls) => '<div class="' + CARD + '"><span class="text-[11px] text-slate-400 block">' + label + '</span><span class="text-2xl font-extrabold ' + (cls || 'text-slate-800 dark:text-slate-100') + '">' + val + '</span></div>';
+    const goalNames = { gain: 'Kökəlmək', lose: 'Arıqlamaq', maintain: 'Qorumaq' };
+    const max = Math.max(1, ...s.goals.map((g) => g.count));
+    adm().innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-3 gap-4">' +
+      card('Ümumi istifadəçi', s.users) + card('Son 24 saatda qeydiyyat', s.newToday, 'text-emerald-600') + card('Son 24 saatda aktiv', s.activeToday, 'text-teal-600') +
+      card('Cavabsız geri dönüş', s.feedbackNew, 'text-amber-600') + card('Community paylaşımları', s.posts) + card('Şikayət olunan postlar', s.reportsPending, 'text-rose-600') + '</div>' +
+      '<div class="' + CARD + '"><h3 class="text-sm font-bold mb-3 text-slate-800 dark:text-slate-100">Məqsədlərə görə</h3>' +
+      s.goals.map((g) => '<div class="mb-2"><div class="flex justify-between text-xs mb-1"><span>' + esc(goalNames[g.goal] || g.goal || '—') + '</span><b>' + g.count + '</b></div><div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width:' + (g.count / max * 100) + '%"></div></div></div>').join('') + '</div>';
+  }
+  async function admFeedback() {
+    const { items } = await api('/admin/feedback', { status: state.admFbFilter || undefined });
+    const st = { new: ['Yeni', 'bg-amber-100 text-amber-700'], seen: ['Baxıldı', 'bg-slate-200 text-slate-700'], replied: ['Cavablandı', 'bg-emerald-100 text-emerald-700'] };
+    const cats = { bug: '🐞 Xəta', idea: '💡 Təklif', praise: '👍 Təşəkkür', other: '💬 Digər' };
+    window.__fbItems = {}; items.forEach((f) => { window.__fbItems[f.id] = f; });
+    adm().innerHTML = '<select id="adm-fb-filter" class="' + INP + ' max-w-xs"><option value="">Hamısı</option><option value="new">Yeni</option><option value="seen">Baxıldı</option><option value="replied">Cavablandı</option></select>' +
+      (items.length ? items.map((f) => '<div class="' + CARD + ' text-xs space-y-2" data-fid="' + f.id + '">' +
+        '<div class="flex flex-wrap justify-between gap-2"><div><b class="text-sm text-slate-800 dark:text-slate-100">' + esc(f.name || '') + '</b> <a class="text-emerald-600 hover:underline" href="mailto:' + esc(f.email) + '">' + esc(f.email) + '</a></div>' +
+        '<div class="flex items-center gap-2"><span class="text-slate-400">' + fmt(f.created) + '</span><span class="px-2 py-0.5 rounded-md font-bold ' + st[f.status][1] + '">' + st[f.status][0] + '</span></div></div>' +
+        '<div class="text-slate-500">' + (cats[f.category] || f.category) + (f.rating ? ' · ' + '★'.repeat(f.rating) : '') + '</div>' +
+        '<p class="text-slate-700 dark:text-slate-200 whitespace-pre-wrap">' + esc(f.message) + '</p>' +
+        (f.reply ? '<div class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200"><b>Cavabınız (' + fmt(f.replied_at) + '):</b> <span class="whitespace-pre-wrap">' + esc(f.reply) + '</span></div>' : '') +
+        '<div class="flex gap-2 pt-1"><button data-act="fb-reply" class="' + GREEN + '"><i class="fa-solid fa-envelope mr-1"></i>E-poçtla cavab ver</button>' +
+        (f.status === 'new' ? '<button data-act="fb-seen" class="' + GRAY + '">Baxıldı</button>' : '') + '</div></div>').join('') : '<p class="text-xs text-slate-400 italic">Boşdur.</p>');
+    const sel = $('adm-fb-filter'); sel.value = state.admFbFilter || '';
+    sel.onchange = () => { state.admFbFilter = sel.value; admLoad(); };
+  }
+  async function admUsers(q) {
+    const { items } = await api('/admin/users', { q: q || '' });
+    adm().innerHTML = '<div class="flex gap-2"><input id="adm-uq" class="' + INP + ' max-w-xs" placeholder="Ad və ya e-poçt…" value="' + esc(q || '') + '"><button data-act="u-search" class="' + GREEN + '">Axtar</button></div>' +
+      '<div class="' + CARD + ' overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-left text-slate-400 uppercase text-[10px]"><th class="pb-2">Ad</th><th>E-poçt</th><th>Qeydiyyat</th><th>Son aktivlik</th><th></th></tr></thead><tbody>' +
+      items.map((u) => '<tr class="border-t border-slate-100 dark:border-slate-800"><td class="py-2 pr-2">' + esc(u.name || '') + '</td><td class="pr-2">' + esc(u.email) + '</td><td class="pr-2">' + fmt(u.created) + '</td><td class="pr-2">' + (u.last_active ? fmt(u.last_active) : '—') + '</td>' +
+        '<td class="text-right"><button data-act="u-ban" data-email="' + esc(u.email) + '" data-banned="' + (u.banned ? 1 : 0) + '" class="font-bold ' + (u.banned ? 'text-emerald-600' : 'text-rose-500') + ' hover:underline">' + (u.banned ? 'Blokdan çıxar' : 'Blokla') + '</button></td></tr>').join('') + '</tbody></table></div>';
+  }
+  async function admPosts() {
+    const { items } = await api('/admin/posts');
+    adm().innerHTML = '<div class="' + CARD + ' overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-left text-slate-400 uppercase text-[10px]"><th class="pb-2">Başlıq</th><th>Müəllif</th><th>❤</th><th>Şikayət</th><th>Tarix</th><th></th></tr></thead><tbody>' +
+      (items.length ? items.map((p) => '<tr class="border-t border-slate-100 dark:border-slate-800' + (p.hidden ? ' opacity-50' : '') + '"><td class="py-2 pr-2 font-semibold">' + esc(p.title) + '</td><td class="pr-2">' + esc(p.author) + '<br><span class="text-slate-400">' + esc(p.email) + '</span></td><td class="pr-2">' + p.likes + '</td><td class="pr-2 ' + (p.reports ? 'text-rose-600 font-bold' : '') + '">' + p.reports + '</td><td class="pr-2">' + fmt(p.created) + '</td>' +
+        '<td class="text-right whitespace-nowrap"><button data-act="p-hide" data-id="' + p.id + '" data-hidden="' + (p.hidden ? 1 : 0) + '" class="font-bold text-amber-600 hover:underline mr-3">' + (p.hidden ? 'Göstər' : 'Gizlət') + '</button><button data-act="p-del" data-id="' + p.id + '" class="font-bold text-rose-500 hover:underline">Sil</button></td></tr>').join('') : '<tr><td class="py-4 text-slate-400 italic">Boşdur.</td></tr>') + '</tbody></table></div>';
+  }
+  function openReply(f) {
+    modal('Cavab: ' + esc(f.email), '<p class="text-xs text-slate-500 whitespace-pre-wrap border-l-4 border-slate-200 pl-3">' + esc(f.message) + '</p>' +
+      '<textarea id="adm-reply-txt" rows="6" maxlength="3000" class="' + INP + '" placeholder="Cavabınızı yazın… (istifadəçiyə e-poçtla gedəcək)"></textarea>' +
+      '<button id="adm-reply-go" class="' + GREEN + ' w-full">Göndər</button>');
+    $('adm-reply-go').onclick = async () => {
+      const message = $('adm-reply-txt').value.trim(); if (!message) return;
+      $('adm-reply-go').disabled = true;
+      try { await api('/admin/feedback/reply', { id: f.id, message }); closeModal(); showToast('Cavab göndərildi', 'success'); admLoad(); }
+      catch (e) { showToast(errText(e), 'error'); $('adm-reply-go').disabled = false; }
+    };
+  }
+  async function onAdminClick(e) {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const act = b.dataset.act;
+    try {
+      if (act === 'fb-reply') openReply(window.__fbItems[b.closest('[data-fid]').dataset.fid]);
+      else if (act === 'fb-seen') { await api('/admin/feedback/update', { id: b.closest('[data-fid]').dataset.fid, status: 'seen' }); admLoad(); }
+      else if (act === 'u-search') await admUsers($('adm-uq').value.trim());
+      else if (act === 'u-ban') {
+        const banned = b.dataset.banned === '1';
+        if (!banned && !confirm(b.dataset.email + ' bloklansın?')) return;
+        await api('/admin/users/ban', { email: b.dataset.email, banned: !banned }); admLoad();
+      } else if (act === 'p-hide') { await api('/admin/posts/hide', { id: b.dataset.id, hidden: b.dataset.hidden !== '1' }); admLoad(); }
+      else if (act === 'p-del') { if (!confirm('Post həmişəlik silinsin?')) return; await api('/admin/posts/delete', { id: b.dataset.id }); admLoad(); }
+    } catch (err) { showToast(errText(err), 'error'); }
+  }
+
+  // ---------- hooks into existing app ----------
+  const _switchTab = switchTab;
+  switchTab = function (id) {
+    _switchTab(id);
+    toggleAdminUI(); // original switchTab resets nav classes, re-hide admin button for non-admins
+    if (id === 'community') loadPosts(true);
+    else if (id === 'feedback') loadMyFeedback();
+    else if (id === 'admin') renderAdminShell();
+  };
+  const _init = initMainApp;
+  initMainApp = function () { _init(); refreshMe(); };
+  const _logout = handleLogout;
+  handleLogout = function () { state.isAdmin = false; toggleAdminUI(); _logout(); };
+  const _setLang = setLanguage;
+  setLanguage = function (l) { _setLang(l); applyLabels(); };
+
+  inject();
+  checkResetHash();
+  window.addEventListener('hashchange', checkResetHash);
+})();
+    </script>
 </body>
 </html>
