@@ -2671,15 +2671,16 @@ RULES:
         }
     </script>
     <script>
-(function () {
+
+     (function () {
   'use strict';
   if (typeof AUTH_API_URL === 'undefined' || !AUTH_API_URL) return;
   const API = AUTH_API_URL.replace(/\/$/, '');
 
-  // ---------- i18n (RU falls back to EN) ----------
+  // ---------- i18n ----------
   const L = {
     AZ: {
-      community: 'Community', feedback: 'Geri Dönüş', admin: 'Admin Panel',
+      community: 'Community', feedback: 'Geri Dönüş', admin: 'Admin Panel', kcal: 'kkal',
       community_desc: 'Digər istifadəçilərin paylaşdığı reseptlər. Öz reseptinizi AI çatbotdan və ya soyuducu bölməsindən paylaşın.',
       newest: 'Yeni', top: 'Populyar', more: 'Daha çox', empty: 'Hələ paylaşım yoxdur. İlk paylaşan siz olun!',
       share: 'Community-də paylaş', share_title: 'Reseptini paylaş', share_note: 'Qeyd (istəyə bağlı)…', share_btn: 'Paylaş',
@@ -2700,7 +2701,7 @@ RULES:
       err_short: 'Mətn çox qısadır.', author: 'Müəllif', mail_off: 'E-poçt xidməti hələ qurulmayıb.'
     },
     EN: {
-      community: 'Community', feedback: 'Feedback', admin: 'Admin Panel',
+      community: 'Community', feedback: 'Feedback', admin: 'Admin Panel', kcal: 'kcal',
       community_desc: 'Recipes shared by other users. Share yours from the AI chatbot or the fridge section.',
       newest: 'New', top: 'Top', more: 'Load more', empty: 'Nothing shared yet. Be the first!',
       share: 'Share to Community', share_title: 'Share your recipe', share_note: 'Note (optional)…', share_btn: 'Share',
@@ -2719,6 +2720,27 @@ RULES:
       pass_info: 'To change your password we will email you a confirmation link. Press the button and follow the link.',
       err: 'Something went wrong', err_login: 'Please sign in again first.', err_rate: 'Daily limit reached, try again later.',
       err_short: 'Text is too short.', author: 'Author', mail_off: 'Email service is not configured yet.'
+    },
+    RU: {
+      community: 'Сообщество', feedback: 'Обратная связь', admin: 'Админ-панель', kcal: 'ккал',
+      community_desc: 'Рецепты других пользователей. Поделитесь своим из ИИ-чатбота или раздела «Холодильник».',
+      newest: 'Новые', top: 'Популярные', more: 'Загрузить ещё', empty: 'Пока ничего нет. Будьте первым!',
+      share: 'Поделиться в сообществе', share_title: 'Поделитесь рецептом', share_note: 'Заметка (необязательно)…', share_btn: 'Опубликовать',
+      share_hint: 'Будут видны только ваше имя и состав рецепта.', shared: 'Опубликовано!',
+      add_log: 'Добавить в дневник', report: 'Пожаловаться', report_reason: 'Причина (кратко):', reported: 'Жалоба отправлена',
+      del: 'Удалить', confirm_del: 'Удалить публикацию?', comment_ph: 'Напишите комментарий…', send: 'Отправить', ingredients: 'Состав', steps: 'Приготовление',
+      fb_title: 'Обратная связь', fb_desc: 'Расскажите об ошибках, идеях или впечатлениях. Ответ придёт и на почту.',
+      fb_bug: '🐞 Ошибка', fb_idea: '💡 Идея', fb_praise: '👍 Благодарность', fb_other: '💬 Другое',
+      fb_ph: 'Напишите сообщение…', fb_send: 'Отправить', fb_sent: 'Отправлено. Спасибо!', fb_mine: 'Мои обращения',
+      fb_none: 'Обращений пока нет.', fb_reply: 'Ответ', fb_new: 'Ожидает', fb_seen: 'Просмотрено', fb_replied: 'Отвечено',
+      forgot: 'Забыли пароль?', forgot_title: 'Восстановление пароля', forgot_desc: 'Введите почту, и мы отправим ссылку для сброса.',
+      send_link: 'Отправить ссылку', link_sent: 'Если эта почта зарегистрирована, ссылка отправлена. Проверьте входящие и спам.',
+      reset_title: 'Новый пароль', new_pass: 'Новый пароль', confirm_pass: 'Повторите новый пароль', save: 'Подтвердить',
+      pass_mismatch: 'Пароли не совпадают!', pass_short: 'Пароль должен быть не короче 6 символов.',
+      reset_ok: 'Пароль изменён. Войдите с новым паролем.', reset_bad: 'Ссылка недействительна или устарела. Запросите новую.',
+      pass_info: 'Для смены пароля мы отправим ссылку подтверждения на вашу почту. Нажмите кнопку и перейдите по ссылке.',
+      err: 'Произошла ошибка', err_login: 'Сначала войдите в аккаунт заново.', err_rate: 'Дневной лимит исчерпан, попробуйте позже.',
+      err_short: 'Текст слишком короткий.', author: 'Автор', mail_off: 'Почтовый сервис ещё не настроен.'
     }
   };
   const t = (k) => { const l = (typeof appState !== 'undefined' && appState.lang) || 'AZ'; return (L[l] && L[l][k]) || L.EN[k] || L.AZ[k] || k; };
@@ -2733,7 +2755,7 @@ RULES:
   const GREEN = BTN + ' bg-emerald-600 hover:bg-emerald-700 text-white';
   const GRAY = BTN + ' bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200';
   const CARD = 'bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm';
-  const state = { isAdmin: false, sort: 'new', offset: 0, posts: {}, fbRating: 0, admView: 'stats' };
+  const state = { isAdmin: false, sort: 'new', offset: 0, posts: {}, order: [], hasMore: false, loaded: false, fbItems: null, fbRating: 0, admView: 'stats' };
 
   async function api(path, body) {
     const r = await fetch(API + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ token: tok(), email: (appState.currentUser && appState.currentUser.email) || undefined }, body || {})) });
@@ -2764,7 +2786,7 @@ RULES:
     return o;
   }
 
-  // ---------- password reset (forgot + reset page) ----------
+  // ---------- password reset ----------
   function openForgot() {
     modal(t('forgot_title'), '<p class="text-xs text-slate-500">' + t('forgot_desc') + '</p>' +
       '<input id="ft-fg-email" type="email" class="' + INP + '" placeholder="email@mail.com">' +
@@ -2841,11 +2863,15 @@ RULES:
     }
     applyLabels();
   }
+  // Re-translates everything WITHOUT losing data: shells are rebuilt, then lists are repainted from cache.
   function applyLabels() {
     document.querySelectorAll('[data-ft]').forEach((e) => { e.textContent = t(e.getAttribute('data-ft')); });
     const f = $('ft-forgot-link'); if (f) f.textContent = t('forgot');
     const pi = $('ft-pass-info'); if (pi) pi.textContent = t('pass_info');
+    const draft = $('fb-msg') ? { msg: $('fb-msg').value, cat: $('fb-cat').value } : null;
     renderCommunityShell(); renderFeedbackShell();
+    if (draft) { $('fb-msg').value = draft.msg; $('fb-cat').value = draft.cat; }
+    paintPosts(); paintFeedback();
   }
   function toggleAdminUI() {
     ['nav-admin', 'mnav-admin'].forEach((id) => { const e = $(id); if (e) e.classList.toggle('hidden', !state.isAdmin); });
@@ -2881,18 +2907,20 @@ RULES:
   function paintStars() {
     document.querySelectorAll('.fb-star').forEach((b) => { b.classList.toggle('text-amber-400', +b.dataset.r <= state.fbRating); b.classList.toggle('text-slate-300', +b.dataset.r > state.fbRating); });
   }
+  function paintFeedback() {
+    const box = $('fb-list'); if (!box || !state.fbItems) return;
+    const items = state.fbItems;
+    const stCls = { new: 'bg-amber-100 text-amber-700', seen: 'bg-slate-200 text-slate-700', replied: 'bg-emerald-100 text-emerald-700' };
+    box.innerHTML = items.length ? items.map((f) =>
+      '<div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs space-y-1.5">' +
+      '<div class="flex justify-between items-center"><span class="text-slate-400">' + fmt(f.created) + (f.rating ? ' · ' + '★'.repeat(f.rating) : '') + '</span><span class="px-2 py-0.5 rounded-md font-bold ' + (stCls[f.status] || '') + '">' + t('fb_' + f.status) + '</span></div>' +
+      '<p class="text-slate-700 dark:text-slate-200 whitespace-pre-wrap">' + esc(f.message) + '</p>' +
+      (f.reply ? '<div class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200"><b>' + t('fb_reply') + ':</b> <span class="whitespace-pre-wrap">' + esc(f.reply) + '</span></div>' : '') + '</div>'
+    ).join('') : '<p class="text-xs text-slate-400 italic">' + t('fb_none') + '</p>';
+  }
   async function loadMyFeedback() {
-    const box = $('fb-list'); if (!box) return;
-    try {
-      const { items } = await api('/feedback/mine');
-      const stCls = { new: 'bg-amber-100 text-amber-700', seen: 'bg-slate-200 text-slate-700', replied: 'bg-emerald-100 text-emerald-700' };
-      box.innerHTML = items.length ? items.map((f) =>
-        '<div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs space-y-1.5">' +
-        '<div class="flex justify-between items-center"><span class="text-slate-400">' + fmt(f.created) + (f.rating ? ' · ' + '★'.repeat(f.rating) : '') + '</span><span class="px-2 py-0.5 rounded-md font-bold ' + (stCls[f.status] || '') + '">' + t('fb_' + f.status) + '</span></div>' +
-        '<p class="text-slate-700 dark:text-slate-200 whitespace-pre-wrap">' + esc(f.message) + '</p>' +
-        (f.reply ? '<div class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200"><b>' + t('fb_reply') + ':</b> <span class="whitespace-pre-wrap">' + esc(f.reply) + '</span></div>' : '') + '</div>'
-      ).join('') : '<p class="text-xs text-slate-400 italic">' + t('fb_none') + '</p>';
-    } catch (e) { box.innerHTML = '<p class="text-xs text-rose-500">' + esc(errText(e)) + '</p>'; }
+    try { state.fbItems = (await api('/feedback/mine')).items; paintFeedback(); }
+    catch (e) { const box = $('fb-list'); if (box) box.innerHTML = '<p class="text-xs text-rose-500">' + esc(errText(e)) + '</p>'; }
   }
 
   // ---------- COMMUNITY ----------
@@ -2912,9 +2940,8 @@ RULES:
     if ($('cm-s-new')) { $('cm-s-new').className = BTN + (state.sort === 'new' ? on : off); $('cm-s-top').className = BTN + (state.sort === 'top' ? on : off); }
   }
   function cardHtml(p) {
-    state.posts[p.id] = p;
     const d = p.data || {}, tot = d.total || {};
-    const ings = (d.ingredients || []).map((i) => '<li class="flex justify-between gap-2"><span>' + esc(i.name) + (i.grams ? ' · ' + Math.round(i.grams) + 'g' : '') + '</span><span class="text-slate-400 whitespace-nowrap">' + Math.round(i.cal) + ' kkal · ' + i.prot + 'g</span></li>').join('');
+    const ings = (d.ingredients || []).map((i) => '<li class="flex justify-between gap-2"><span>' + esc(i.name) + (i.grams ? ' · ' + Math.round(i.grams) + 'g' : '') + '</span><span class="text-slate-400 whitespace-nowrap">' + Math.round(i.cal) + ' ' + t('kcal') + ' · ' + i.prot + 'g</span></li>').join('');
     const steps = (d.steps || []).map((s, i) => '<li class="mb-1"><b class="text-emerald-600">' + (i + 1) + '.</b> ' + esc(s) + '</li>').join('');
     const act = 'text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-emerald-600 flex items-center gap-1';
     return '<article data-pid="' + p.id + '" class="' + CARD + '">' +
@@ -2922,7 +2949,7 @@ RULES:
       '<p class="text-[11px] text-slate-400">' + esc(p.author) + ' · ' + fmt(p.created) + '</p></div>' +
       '<span class="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 whitespace-nowrap">' + (p.kind === 'fridge' ? '🧊' : '📷') + '</span></div>' +
       '<div class="grid grid-cols-4 gap-2 text-center bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-2xl my-3 text-xs font-bold">' +
-      '<div><span class="block text-slate-800 dark:text-slate-100">' + tot.cal + '</span><span class="text-[9px] text-slate-400 uppercase">kkal</span></div>' +
+      '<div><span class="block text-slate-800 dark:text-slate-100">' + tot.cal + '</span><span class="text-[9px] text-slate-400 uppercase">' + t('kcal') + '</span></div>' +
       '<div><span class="block text-emerald-600">' + tot.prot + 'g</span><span class="text-[9px] text-slate-400 uppercase">P</span></div>' +
       '<div><span class="block text-teal-600">' + tot.carb + 'g</span><span class="text-[9px] text-slate-400 uppercase">C</span></div>' +
       '<div><span class="block text-amber-600">' + tot.fat + 'g</span><span class="text-[9px] text-slate-400 uppercase">F</span></div></div>' +
@@ -2936,20 +2963,31 @@ RULES:
       (p.mine ? '<button data-act="delete" class="' + act + ' hover:!text-rose-500"><i class="fa-solid fa-trash"></i></button>' : '<button data-act="report" class="' + act + '" title="' + t('report') + '"><i class="fa-regular fa-flag"></i></button>') + '</div>' +
       '<div class="cm-comments hidden mt-3 space-y-2"></div></article>';
   }
+  // Repaint the list from cache (used on language change)
+  function paintPosts() {
+    const list = $('cm-list'); if (!list) return;
+    list.innerHTML = state.order.length
+      ? state.order.map((id) => cardHtml(state.posts[id])).join('')
+      : (state.loaded ? '<p class="text-center text-xs text-slate-400 italic py-10">' + t('empty') + '</p>' : '');
+    const more = $('cm-more'); if (more) more.classList.toggle('hidden', !state.hasMore);
+  }
   async function loadPosts(reset) {
     const list = $('cm-list'); if (!list) return;
-    if (reset) { state.offset = 0; list.innerHTML = ''; paintSort(); }
+    if (reset) { state.offset = 0; state.order = []; paintSort(); }
     try {
       const { items } = await api('/community/list', { sort: state.sort, offset: state.offset });
-      list.insertAdjacentHTML('beforeend', items.map(cardHtml).join(''));
-      state.offset += items.length;
-      $('cm-more').classList.toggle('hidden', items.length < 20);
-      if (!list.children.length) list.innerHTML = '<p class="text-center text-xs text-slate-400 italic py-10">' + t('empty') + '</p>';
+      items.forEach((p) => { state.posts[p.id] = p; state.order.push(p.id); });
+      state.offset += items.length; state.hasMore = items.length >= 20; state.loaded = true;
+      paintPosts();
     } catch (e) { list.innerHTML = '<p class="text-center text-xs text-rose-500 py-6">' + esc(errText(e)) + '</p>'; }
   }
   async function loadComments(art) {
     const id = art.dataset.pid, box = art.querySelector('.cm-comments');
     const { items } = await api('/community/comments', { id });
+    if (state.posts[id]) {
+      state.posts[id].comments = items.length;
+      const cnt = art.querySelector('[data-act="comments"] span'); if (cnt) cnt.textContent = items.length;
+    }
     box.innerHTML = items.map((c) => '<div class="text-xs p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60"><b class="text-slate-700 dark:text-slate-200">' + esc(c.author) + '</b> <span class="text-slate-400 text-[10px]">' + fmt(c.created) + '</span><p class="text-slate-600 dark:text-slate-300 whitespace-pre-wrap break-words">' + esc(c.body) + '</p></div>').join('') +
       '<div class="flex gap-2"><input maxlength="500" class="cm-in ' + INP + '" placeholder="' + t('comment_ph') + '"><button data-act="send-comment" class="' + GREEN + '">' + t('send') + '</button></div>';
   }
@@ -2976,7 +3014,9 @@ RULES:
         await api('/community/report', { id, reason }); showToast(t('reported'), 'success');
       } else if (act === 'delete') {
         if (!confirm(t('confirm_del'))) return;
-        await api('/community/delete', { id }); art.remove();
+        await api('/community/delete', { id });
+        state.order = state.order.filter((x) => x !== id); delete state.posts[id];
+        paintPosts();
       }
     } catch (err) { showToast(errText(err), 'error'); }
   }
@@ -3126,7 +3166,10 @@ RULES:
   const _init = initMainApp;
   initMainApp = function () { _init(); refreshMe(); };
   const _logout = handleLogout;
-  handleLogout = function () { state.isAdmin = false; toggleAdminUI(); _logout(); };
+  handleLogout = function () {
+    state.isAdmin = false; state.order = []; state.posts = {}; state.fbItems = null; state.loaded = false; state.hasMore = false;
+    toggleAdminUI(); _logout();
+  };
   const _setLang = setLanguage;
   setLanguage = function (l) { _setLang(l); applyLabels(); };
 
