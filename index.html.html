@@ -10,24 +10,132 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- html2pdf Bundle CDN for Client-Side PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
+        const tw = (n, s) => Object.fromEntries(s.map(x => [x, `rgb(var(--${n}-${x}) / <alpha-value>)`]));
         tailwind.config = {
             darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        emerald: { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b' },
-                        teal: { 500: '#14b8a6', 600: '#0d9488' },
-                        amber: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }
-                    },
-                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }
-                }
-            }
+            theme: { extend: {
+                colors: {
+                    emerald: tw('emerald', [50,100,200,300,400,500,600,700,800,900]),
+                    teal: tw('teal', [50,100,300,400,500,600,700,900]),
+                    slate: tw('slate', [50,100,200,300,400,500,600,700,800,900,950]),
+                    amber: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }
+                },
+                fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] }
+            } }
         }
     </script>
+    <script>
+const VIP_USERS = {
+  "abbasova2008nermin@gmail.com": {
+    name:    "Nərminsuu",
+    title:   "Xoş gəlmisən, Nərminsuu 🤍",
+    banner:  "Bu səhifə yalnız sənin üçün hazırlanıb. Sən mənim üçün çox dəyərlisən, bunu heç vaxt unutma.",
+    tag:     "✦ Xüsusi qonaq",
+    workout: "Bu gün nə qədər yorulsan da, gəldiyin üçün təşəkkür edirəm. Sən bacararsan 💪",
+    report:  "Hər rəqəmin arxasında sənin zəhmətin dayanır.",
+    footer:  "Sənin üçün, ürəkdən hazırlanıb — Ərdəm",
+    letter: {
+      title: "Əziz Nərminsuu,",
+      lines: [
+        "Bu məktubu açanda üzündə kiçik də olsa bir təbəssüm yaransın deyə yazdım.",
+        "Sən mənim üçün çox dəyərlisən. Bunu bəlkə tez-tez deməyə bilirəm, amma hər zaman belə hiss edirəm.",
+        "Səni nə qədər çox istədiyimi, sənin mənim üçün nə qədər vacib olduğunu sözlə tam izah edə bilmərəm. Sənin yanında olmaq mənə hər dəfə xoş gəlir.",
+        "Bu saytı hazırlayanda ən çox sənin haqqında düşündüm. Hər dəfə daxil olanda bil ki, burada yalnız sənin üçün ayrılmış xüsusi bir künc var.",
+        "Özünə qulluq etməyin, sağlam olmağa çalışmağın məni çox sevindirir. Yorğun günlərində də, güclü günlərində də yanındayam.",
+        "Nə qədər qiymətli olduğunu heç vaxt unutma."
+      ],
+      sign: "Ərdəmdən Nərminə",
+      heart: true
+    }
+  },
+  "huseynoverdem@gmail.com": {
+    name:    "Ardam",
+    title:   "Xoş gəldin, Ardam 👑",
+    banner:  "Bu platformanın yaradıcısı kimi sənə xüsusi panel. Hər gün özünü inkişaf etdirməyə davam et.",
+    tag:     "✦ Yaradıcı",
+    workout: "Bu gün də öz layihən kimi özünü qurmağa vaxt ayır. Davam et 💪",
+    report:  "Hər rəqəm sənin zəhmətinin göstəricisidir.",
+    footer:  "NutriFit — Ardam Huseynov tərəfindən sevgi ilə hazırlanıb",
+    letter: {
+      title: "Əziz Ardam,",
+      lines: [
+        "Bu platformanı sıfırdan sən qurdun. Hər düymənin, hər rəqəmin arxasında sənin əməyin dayanır.",
+        "Bəzən yorulacaqsan, bəzən hər şey çətin görünəcək. Amma hər dəfə geri dönüb baxanda görəcəksən ki, nə qədər irəli gəlmisən.",
+        "Bu gün də bir addım at. Kiçik addımlar böyük yolları tamamlayır. 💪"
+      ],
+      sign: "Özündən özünə"
+    }
+  }
+};
+function applyVipTheme(email) {
+  const vip = VIP_USERS[(email || '').trim().toLowerCase()];
+  const root = document.documentElement;
+  if (vip) {
+    if (!root.dataset.vipWasDark) root.dataset.vipWasDark = root.classList.contains('dark') ? '1' : '0';
+    root.classList.add('vip-theme', 'dark');
+  } else if (root.classList.contains('vip-theme')) {
+    root.classList.remove('vip-theme');
+    if (root.dataset.vipWasDark === '0') root.classList.remove('dark');
+    delete root.dataset.vipWasDark;
+  }
+  document.querySelectorAll('[data-vip]').forEach(e => e.textContent = vip ? (vip[e.dataset.vip] || '') : '');
+  const t = document.getElementById('banner-welcome-title');
+  if (vip && t) t.textContent = vip.title;
+  const icon = document.getElementById('theme-icon');
+  if (vip && icon) icon.className = 'fa-solid fa-sun';
+}
+try { applyVipTheme(localStorage.getItem('nutrifit_active_session')); } catch (e) {}
+
+function showVipLetter(email, force) {
+  const vip = VIP_USERS[(email || '').trim().toLowerCase()];
+  if (!vip || !vip.letter) return;
+  if (!document.getElementById('vip-fab')) {
+    const b = document.createElement('button');
+    b.id = 'vip-fab'; b.className = 'vip-only'; b.title = 'Məktub'; b.textContent = '✉';
+    b.onclick = () => showVipLetter(email, true);
+    document.body.appendChild(b);
+  }
+  if (!force) {
+    try { if (sessionStorage.getItem('vip_letter_shown')) return; sessionStorage.setItem('vip_letter_shown', '1'); } catch (e) {}
+  }
+  if (document.getElementById('vip-letter')) return;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const L = vip.letter;
+  const o = document.createElement('div');
+  o.id = 'vip-letter';
+  o.innerHTML = '<div class="vl-env" id="vl-env"><div class="vl-flap"></div><div class="vl-seal">✦</div></div>' +
+                '<p class="vl-hint" id="vl-hint">Sənin üçün bir məktub var ✉️ — açmaq üçün toxun</p>';
+  const close = () => { o.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  const open = () => {
+    const env = document.getElementById('vl-env');
+    if (!env) return;
+    env.classList.add('vl-out');
+    document.getElementById('vl-hint').remove();
+    setTimeout(() => {
+      env.remove();
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      let d = 0.9;
+      const paras = L.lines.map(t => { const h = '<p style="animation-delay:' + d.toFixed(1) + 's">' + esc(t) + '</p>'; d += 1.1; return h; }).join('');
+      card.innerHTML = '<div class="vl-title">' + esc(L.title) + '</div><div class="vl-body">' + paras + '</div>' +
+        '<div class="vl-sign" style="animation-delay:' + d.toFixed(1) + 's">' + esc(L.sign) + (L.heart ? '<span class="vl-heart">♥</span>' : '') + '</div>' +
+        '<button class="vl-close" type="button">Təşəkkür edirəm 🤍</button>';
+      card.querySelector('.vl-close').onclick = close;
+      o.appendChild(card);
+    }, 500);
+  };
+  o.addEventListener('click', e => { if (e.target.closest('#vl-env') || e.target.id === 'vl-hint') open(); });
+  document.body.appendChild(o);
+}
+
+</script>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -36,6 +144,60 @@
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
         @keyframes flame-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         .animate-flame { animation: flame-pulse 1.8s infinite ease-in-out; }
+/* ===== Standart rənglər ===== */
+:root {
+  --emerald-50:236 253 245; --emerald-100:209 250 229; --emerald-200:167 243 208; --emerald-300:110 231 183; --emerald-400:52 211 153;
+  --emerald-500:16 185 129; --emerald-600:5 150 105; --emerald-700:4 120 87; --emerald-800:6 95 70; --emerald-900:6 78 59;
+  --teal-50:240 253 250; --teal-100:204 251 241; --teal-300:94 234 212; --teal-400:45 212 191;
+  --teal-500:20 184 166; --teal-600:13 148 136; --teal-700:15 118 110; --teal-900:19 78 74;
+  --slate-50:248 250 252; --slate-100:241 245 249; --slate-200:226 232 240; --slate-300:203 213 225; --slate-400:148 163 184;
+  --slate-500:100 116 139; --slate-600:71 85 105; --slate-700:51 65 85; --slate-800:30 41 59; --slate-900:15 23 42; --slate-950:2 6 23;
+}
+/* ===== VIP: tünd göy + tünd qəhvəyi + burgundy ===== */
+html.vip-theme {
+  --emerald-50:253 242 245; --emerald-100:250 224 231; --emerald-200:242 190 204; --emerald-300:232 150 172; --emerald-400:222 115 142;
+  --emerald-500:170 30 70; --emerald-600:128 0 32; --emerald-700:106 8 36; --emerald-800:82 10 32; --emerald-900:58 8 24;
+  --teal-50:235 242 255; --teal-100:214 228 255; --teal-300:130 165 235; --teal-400:90 130 215;
+  --teal-500:50 90 175; --teal-600:36 68 140; --teal-700:28 54 112; --teal-900:16 30 64;
+  --slate-50:245 238 230; --slate-100:245 236 228; --slate-200:232 220 210; --slate-300:214 198 186; --slate-400:186 166 155;
+  --slate-500:150 130 125; --slate-600:110 85 80; --slate-700:74 44 42; --slate-800:46 30 28; --slate-900:14 26 52; --slate-950:7 13 30;
+}
+html.vip-theme body {
+  background-image: radial-gradient(circle at 20% 0%, rgba(128,0,32,.18), transparent 45%),
+                    radial-gradient(circle at 90% 100%, rgba(60,36,28,.35), transparent 50%);
+}
+html.vip-theme header { border-bottom-color: rgba(184,134,11,.35); }
+html.vip-theme button[onclick="toggleDarkMode()"] { display: none; }
+
+/* ===== VIP məktub ===== */
+#vip-letter{position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;
+  background:radial-gradient(circle at 25% 15%,rgba(128,0,32,.5),transparent 55%),radial-gradient(circle at 80% 90%,rgba(74,44,29,.55),transparent 55%),rgba(7,13,30,.94);
+  backdrop-filter:blur(6px);animation:vlfade .6s ease}
+@keyframes vlfade{from{opacity:0}to{opacity:1}}
+@keyframes vlfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes vlrise{from{opacity:0;transform:translateY(60px) scale(.92)}to{opacity:1;transform:none}}
+@keyframes vlline{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.vl-env{cursor:pointer;width:min(320px,80vw);aspect-ratio:3/2;position:relative;background:linear-gradient(145deg,#3b2417,#2a1810);
+  border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,.65);border:1px solid rgba(184,134,11,.45);animation:vlfloat 3s ease-in-out infinite;transition:transform .5s,opacity .5s}
+.vl-env.vl-out{transform:scale(.6) translateY(40px);opacity:0}
+.vl-flap{position:absolute;top:0;left:0;right:0;height:62%;background:linear-gradient(#5a3523,#3b2417);clip-path:polygon(0 0,100% 0,50% 100%);border-radius:10px 10px 0 0}
+.vl-seal{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#b0224a,#800020 60%,#4a0012);color:#f3d9a4;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 5px 16px rgba(0,0,0,.55)}
+.vl-hint{margin-top:26px;color:#e8d5b5;font-family:'Caveat',Georgia,cursive;font-size:1.5rem;text-align:center;letter-spacing:.3px}
+.vl-card{width:min(520px,100%);max-height:88vh;overflow:auto;background:linear-gradient(160deg,#f7eddd,#ecdcc3);color:#3a2418;border-radius:14px;padding:32px 28px 26px;
+  box-shadow:0 30px 80px rgba(0,0,0,.7);border:1px solid rgba(184,134,11,.5);animation:vlrise .9s cubic-bezier(.2,.8,.2,1);font-family:'Caveat',Georgia,cursive}
+.vl-title{font-size:2.1rem;font-weight:700;color:#800020;margin-bottom:14px}
+.vl-body p{font-size:1.45rem;line-height:1.45;margin:0 0 12px;opacity:0;animation:vlline .9s ease forwards}
+.vl-sign{margin-top:18px;text-align:right;font-size:1.7rem;font-weight:600;color:#800020;opacity:0;animation:vlline .9s ease forwards}
+.vl-heart{display:inline-block;margin-left:8px;font-size:.8em;color:#800020;text-shadow:0 1px 6px rgba(128,0,32,.35);animation:vlbeat 1.6s ease-in-out infinite}
+@keyframes vlbeat{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+.vl-close{display:block;margin:22px auto 0;padding:10px 26px;border:0;border-radius:12px;cursor:pointer;font:700 12px 'Plus Jakarta Sans',sans-serif;
+  color:#f3d9a4;background:linear-gradient(135deg,#800020,#4a0012);box-shadow:0 6px 18px rgba(128,0,32,.4)}
+#vip-fab{position:fixed;right:16px;bottom:84px;z-index:60;width:44px;height:44px;border-radius:50%;border:1px solid rgba(184,134,11,.55);
+  background:linear-gradient(135deg,#800020,#4a0012);color:#f3d9a4;font-size:20px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.vip-only { display: none !important; }
+html.vip-theme .vip-only { display: revert !important; }
+
     </style>
 </head>
 <body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 flex flex-col">
@@ -143,6 +305,7 @@
                     <div class="flex items-center space-x-2">
                         <span class="text-xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">NutriFit</span>
                         <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">v1.0.2 Pro</span>
+<span class="vip-only text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40">✦ VIP</span>
                     </div>
                     <p class="text-[11px] text-slate-400 hidden sm:block" data-i18n="app_tagline">Ağıllı Qidalanma, BMR & Məşq Ekosistemi</p>
                     <p class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">by Ardam Huseynov</p>
@@ -224,6 +387,7 @@
                         <div class="overflow-hidden">
                             <h4 id="sb-user-name" class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">İstifadəçi</h4>
                             <p id="sb-user-goal" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium truncate">Kökelmək / Əzələ yığımı</p>
+<p class="vip-only text-[10px] text-amber-400 font-bold" data-vip="tag"></p>
                         </div>
                     </div>
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-1 border-t border-slate-200 dark:border-slate-700/60 pt-2">
@@ -250,6 +414,7 @@
                                 </div>
                                 <h1 id="banner-welcome-title" class="text-2xl lg:text-3xl font-bold tracking-tight">Salam!</h1>
                                 <p class="text-emerald-100 text-xs sm:text-sm mt-1 max-w-xl" data-i18n="dash_subtitle">Metabolizm göstəricilərinizə əsasən gündəlik kalori və zülal hədəfinizi tamamlayın.</p>
+<p class="vip-only text-sm text-amber-200 mt-2 max-w-xl italic" data-vip="banner"></p>
                             </div>
                             <div class="flex items-center space-x-3 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 shrink-0">
                                 <div class="text-center px-2.5 border-r border-white/20">
@@ -506,6 +671,7 @@
                                 </span>
                                 <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100" data-i18n="workout_title">Fərdi Məşq Cədvəli</h2>
                                 <p class="text-xs text-slate-500 mt-1" id="workout-desc-context">BMR və çəki göstəricilərinizə uyğun həftəlik adaptive məşq planı.</p>
+<p class="vip-only text-xs text-amber-400 mt-2 font-semibold" data-vip="workout"></p>
                             </div>
                             <button onclick="regenerateWorkout()" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-xs shadow-lg shadow-amber-500/20 transition flex items-center justify-center space-x-2">
                                 <i class="fa-solid fa-rotate"></i>
@@ -550,6 +716,7 @@
                             </span>
                             <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100" data-i18n="report_title">Həftəlik Qidalanma və Sağlamlıq Hesabatı</h2>
                             <p class="text-sm text-slate-500 mt-1" data-i18n="report_desc">Kalori uyğunluğu, mikronutrientlər və çəki dinamikasını təmiz PDF formatında ixrac edin.</p>
+<p class="vip-only text-xs text-amber-400 mt-1 italic" data-vip="report"></p>
                         </div>
 
                         <div id="pdf-preview-box" class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700/80 mb-6 space-y-6">
@@ -584,6 +751,7 @@
 
                 <footer class="mt-8 mb-20 lg:mb-4 text-center text-xs text-slate-400 dark:text-slate-500">
                     &copy; 2026 NutriFit &middot; by Ardam Huseynov &middot; <span data-i18n="footer_rights">Bütün hüquqlar qorunur.</span>
+<span class="vip-only block mt-1 text-amber-500 font-semibold" data-vip="footer"></span>
                 </footer>
             </main>
         </div>
@@ -1467,6 +1635,9 @@
         }
 
         function handleLogout() {
+            applyVipTheme(null);
+            try { sessionStorage.removeItem('vip_letter_shown'); } catch (e) {}
+            { const l = document.getElementById('vip-letter'); if (l) l.remove(); }
             localStorage.removeItem('nutrifit_active_session');
             localStorage.removeItem('nutrifit_cloud_token');
             appState.currentUser = null;
@@ -1562,6 +1733,9 @@
             // Context note in workout tab
             document.getElementById('workout-desc-context').innerText = 
                 `${u.age} ${dict.age}, ${u.height} sm, ${u.weight} kq (${goalText}) — BMR: ${u.bmr} kkal, TDEE: ${u.tdee} kkal.`;
+
+            applyVipTheme(u.email);
+            showVipLetter(u.email);
         }
 
         // ADD MEAL LOG TO PROGRESS RINGS AND INCREMENT STREAK
