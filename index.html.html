@@ -3352,5 +3352,161 @@ RULES:
   window.addEventListener('hashchange', checkResetHash);
 })();
     </script>
+<!-- ======= NutriFit: Həftəlik icmal + VIP Light/Dark =======
+     Bu bloku index.html-də axırıncı </body> teqindən ƏVVƏL yapışdır. Başqa heç nəyi dəyişmək lazım deyil. -->
+<style>
+/* VIP Light rejimi (krem + burgundy + tünd göy) */
+html.vip-theme:not(.dark) body {
+  background-image: radial-gradient(circle at 20% 0%, rgba(128,0,32,.07), transparent 45%),
+                    radial-gradient(circle at 90% 100%, rgba(36,68,140,.07), transparent 50%);
+}
+html.vip-theme:not(.dark) .bg-white { background-color: #fffaf3; }
+html.vip-theme:not(.dark) header,
+html.vip-theme:not(.dark) nav.fixed.bottom-0 { background-color: rgba(255,250,243,.9); }
+html.vip-theme:not(.dark) header { border-bottom-color: rgba(128,0,32,.25); }
+</style>
+<script>
+(function () {
+  /* ---------- 1) VIP: Dark/Light seçimi (default dark) ---------- */
+  applyVipTheme = function (email) {
+    const key = (email || '').trim().toLowerCase();
+    const vip = VIP_USERS[key], root = document.documentElement;
+    if (vip) {
+      if (!root.dataset.vipWasDark) root.dataset.vipWasDark = root.classList.contains('dark') ? '1' : '0';
+      root.classList.add('vip-theme');
+      let pref = 'dark';
+      try { pref = localStorage.getItem('nutrifit_vip_theme_' + key) || 'dark'; } catch (e) {}
+      root.classList.toggle('dark', pref !== 'light');
+    } else if (root.classList.contains('vip-theme')) {
+      root.classList.remove('vip-theme');
+      root.classList.toggle('dark', root.dataset.vipWasDark === '1');
+      delete root.dataset.vipWasDark;
+    }
+    document.querySelectorAll('[data-vip]').forEach(e => e.textContent = vip ? (vip[e.dataset.vip] || '') : '');
+    const t = document.getElementById('banner-welcome-title');
+    if (vip && t) t.textContent = vip.title;
+    const icon = document.getElementById('theme-icon');
+    if (vip && icon) icon.className = 'fa-solid fa-sun';
+    refreshVipThemeUI();
+  };
+  window.setVipTheme = function (mode) {
+    const u = appState.currentUser;
+    if (!u || !VIP_USERS[u.email.trim().toLowerCase()]) return;
+    try { localStorage.setItem('nutrifit_vip_theme_' + u.email.trim().toLowerCase(), mode); } catch (e) {}
+    document.documentElement.classList.toggle('dark', mode !== 'light');
+    refreshVipThemeUI();
+  };
+  window.refreshVipThemeUI = function () {
+    const dark = document.documentElement.classList.contains('dark');
+    const b = document.getElementById('vip-theme-dark'), l = document.getElementById('vip-theme-light');
+    if (!b || !l) return;
+    const on = ' bg-emerald-600 text-white shadow', off = ' text-slate-500';
+    b.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition' + (dark ? on : off);
+    l.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition' + (dark ? off : on);
+  };
+  const ph = document.querySelector('[data-i18n="profile_title"]');
+  if (ph) ph.insertAdjacentHTML('afterend',
+    '<div class="vip-only p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">' +
+    '<label class="text-xs font-bold text-slate-700 dark:text-slate-200 block mb-2">✦ Tema (VIP)</label>' +
+    '<div class="flex gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">' +
+    '<button type="button" id="vip-theme-dark" onclick="setVipTheme(\'dark\')"><i class="fa-solid fa-moon mr-1"></i>Dark</button>' +
+    '<button type="button" id="vip-theme-light" onclick="setVipTheme(\'light\')"><i class="fa-solid fa-sun mr-1"></i>Light</button>' +
+    '</div></div>');
+
+  /* ---------- 2) Həftəlik hədəf tarixçəsi (son 4 həftə) ---------- */
+  const WK = {
+    AZ: { title: 'Həftəlik Hədəf İcmalı', desc: 'Son 4 həftə üzrə gündəlik kalori hədəfinin tamamlanması', now: 'Bu həftə', ago: n => n + ' həftə əvvəl', avg: 'Orta', hit: 'gün hədəfdə', days: ['B.e','Ç.a','Çər','C.a','Cüm','Şən','Baz'], loc: 'az' },
+    EN: { title: 'Weekly Goal Summary', desc: 'Daily calorie goal completion over the last 4 weeks', now: 'This week', ago: n => n + ' wk ago', avg: 'Avg', hit: 'days on target', days: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], loc: 'en' },
+    RU: { title: 'Недельный Итог', desc: 'Выполнение дневной нормы калорий за последние 4 недели', now: 'Эта неделя', ago: n => n + ' нед. назад', avg: 'Ср.', hit: 'дн. в норме', days: ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'], loc: 'ru' }
+  };
+  const pad = n => String(n).padStart(2, '0');
+  const ds = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const monday = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+  const logKey = () => 'nutrifit_daily_logs_' + appState.currentUser.email.toLowerCase();
+
+  function recordWeekHistory(logs) {
+    const u = appState.currentUser;
+    if (!u || !logs || !u.targets) return;
+    const h = logs.weekHistory = logs.weekHistory || {};
+    h[logs.lastLogDate] = { cal: logs.cal, target: u.targets.cal };
+    const cut = monday(new Date()); cut.setDate(cut.getDate() - 21);
+    const cs = ds(cut);
+    Object.keys(h).forEach(k => { if (k < cs) delete h[k]; });
+  }
+
+  // gecə yarısı sıfırlananda tarixçə itməsin
+  const _getUserLogs = getUserLogs;
+  getUserLogs = function () {
+    let prev = {};
+    if (appState.currentUser) {
+      try { const s = JSON.parse(localStorage.getItem(logKey()) || 'null'); if (s && s.weekHistory) prev = s.weekHistory; } catch (e) {}
+    }
+    const logs = _getUserLogs();
+    if (!logs.weekHistory) {
+      logs.weekHistory = prev;
+      if (appState.currentUser && Object.keys(prev).length) localStorage.setItem(logKey(), JSON.stringify(logs));
+    }
+    return logs;
+  };
+  const _saveLogs = saveLogsToStorage;
+  saveLogsToStorage = function (logs) { recordWeekHistory(logs); _saveLogs(logs); };
+
+  window.renderWeeklyHistory = function () {
+    const u = appState.currentUser, tab = document.getElementById('tab-dashboard');
+    if (!u || !u.targets || !tab) return;
+    let card = document.getElementById('weekly-history-card');
+    if (!card) {
+      card = document.createElement('div');
+      card.id = 'weekly-history-card';
+      card.className = 'bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm';
+      tab.appendChild(card);
+    }
+    const L = WK[appState.lang] || WK.AZ;
+    const logs = getUserLogs(), today = getTodayDateStr();
+    const hist = Object.assign({}, logs.weekHistory || {});
+    hist[today] = { cal: logs.cal, target: u.targets.cal };
+    const fmtD = d => d.toLocaleDateString(L.loc, { day: 'numeric', month: 'short' });
+    const mon0 = monday(new Date());
+    let rows = '';
+    for (let w = 0; w < 4; w++) {
+      const start = new Date(mon0); start.setDate(start.getDate() - 7 * w);
+      const end = new Date(start); end.setDate(end.getDate() + 6);
+      let sum = 0, n = 0, hits = 0, cells = '';
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(start); d.setDate(start.getDate() + i);
+        const k = ds(d), e = hist[k], isToday = k === today;
+        let pct = 0, color = 'bg-slate-300';
+        if (e && e.target > 0 && k <= today) {
+          pct = Math.round(e.cal / e.target * 100);
+          const ok = pct >= 90 && (u.goal === 'gain' || pct <= 110);
+          color = ok ? 'bg-emerald-500' : (pct < 90 ? 'bg-amber-500' : 'bg-rose-500');
+          if (pct > 0) { sum += pct; n++; if (ok) hits++; }
+        }
+        cells += '<div class="flex-1 flex flex-col items-center gap-1">' +
+          '<div class="w-full h-14 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-end overflow-hidden' + (isToday ? ' ring-2 ring-emerald-500' : '') + '">' +
+          (pct ? '<div class="w-full rounded-lg transition-all ' + color + '" style="height:' + Math.min(pct, 100) + '%"></div>' : '') + '</div>' +
+          '<span class="text-[10px] font-bold text-slate-500">' + L.days[i] + '</span>' +
+          '<span class="text-[10px] ' + (pct ? 'font-semibold text-slate-700 dark:text-slate-300' : 'text-slate-400') + '">' + (pct ? pct + '%' : '–') + '</span></div>';
+      }
+      rows += '<div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">' +
+        '<div class="flex flex-wrap items-center justify-between gap-1 mb-3"><div>' +
+        '<span class="text-xs font-bold text-slate-800 dark:text-slate-100">' + (w === 0 ? L.now : L.ago(w)) + '</span> ' +
+        '<span class="text-[11px] text-slate-400">' + fmtD(start) + ' – ' + fmtD(end) + '</span></div>' +
+        '<div class="text-[11px] font-bold"><span class="text-emerald-600 dark:text-emerald-400">' + hits + '/7 ' + L.hit + '</span>' +
+        ' · <span class="text-slate-500">' + L.avg + ': ' + (n ? Math.round(sum / n) : 0) + '%</span></div></div>' +
+        '<div class="flex gap-1.5">' + cells + '</div></div>';
+    }
+    card.innerHTML = '<h3 class="text-sm font-bold text-slate-700 dark:text-slate-300">' + L.title + '</h3>' +
+      '<p class="text-[11px] text-slate-400 mb-4">' + L.desc + '</p><div class="space-y-3">' + rows + '</div>';
+  };
+
+  const _updateUI = updateUserUIInfo;
+  updateUserUIInfo = function () { _updateUI.apply(this, arguments); renderWeeklyHistory(); };
+
+  // səhifə yenilənəndə VIP temasını dərhal tətbiq et
+  try { applyVipTheme(localStorage.getItem('nutrifit_active_session')); } catch (e) {}
+})();
+</script>
+
 </body>
 </html>
