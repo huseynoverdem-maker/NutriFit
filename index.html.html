@@ -4227,5 +4227,125 @@ html.dark .mobile-nav-btn.ft-active{color:rgb(var(--emerald-400))!important}
   };
 })();
 </script>
+    <!-- ======= NutriFit: Məqsəd proqnozu kartı. Bunu index.html-də axırıncı </body> teqindən ƏVVƏL yapışdır ======= -->
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const lang = () => (appState && appState.lang) || 'AZ';
+  const KCAL_PER_KG = 7700; // 1 kq bədən çəkisi dəyişikliyi ≈ 7700 kkal
+
+  const T = {
+    AZ: {
+      title: 'Məqsəd Proqnozu', gain: 'Kökəlmək / Əzələ yığımı', lose: 'Arıqlamaq', maintain: 'Formanı qorumaq',
+      daily: 'Gündəlik hədəf', tdee: 'Təxmini xərclənən (TDEE)', diff: 'Fərq', kcal: 'kkal', kg: 'kq',
+      m1: '1 ay sonra', m3: '3 ay sonra', per: 'Aylıq dəyişiklik', train: 'həftədə',
+      tdays: 'gün məşq', target: 'Hədəf çəkin (kq)', setT: 'Hesabla', reach: 'Hədəfə çatmaq üçün təxminən',
+      months: 'ay', reached: 'Hədəf çəkiyə artıq çatmısan 🎉', wrongDir: 'Seçdiyin məqsəd bu hədəf çəkiyə doğru getmir. Profildən məqsədi dəyiş.',
+      noteGain: (c, m, w1) => `Hər gün təxminən ${c} kkal qəbul etsən (TDEE-dən +${m} kkal artıq) və məşq proqramını tam yerinə yetirsən, 1 aya təxminən +${w1} kq qalxa bilərsən. Bunun yarıya yaxını əzələ, qalanı yağ və su/qlikogen olur. Yeni başlayanlar üçün real əzələ artımı ayda ~0.5–1 kq-dır.`,
+      noteLose: (c, m, w1) => `Hər gün təxminən ${c} kkal qəbul etsən (TDEE-dən −${m} kkal az) və məşq proqramını tam yerinə yetirsən, 1 aya təxminən −${w1} kq verə bilərsən. Zülalı yüksək saxla ki, əzələ itməsin.`,
+      noteMain: c => `Hər gün təxminən ${c} kkal qəbul etsən və məşq proqramını yerinə yetirsən, çəkin sabit qalacaq, forma qorunacaq.`,
+      disc: 'Bu təxmini hesabdır (1 kq ≈ 7700 kkal). Real nəticə yuxu, stres və orqanizmdən asılı olaraq dəyişir. Gündəlik hədəfi və həftəlik məşq günlərini ardıcıl tamamlamaq şərtdir.'
+    },
+    EN: {
+      title: 'Goal Forecast', gain: 'Gain weight / muscle', lose: 'Lose weight', maintain: 'Maintain shape',
+      daily: 'Daily target', tdee: 'Estimated burn (TDEE)', diff: 'Difference', kcal: 'kcal', kg: 'kg',
+      m1: 'After 1 month', m3: 'After 3 months', per: 'Monthly change', train: 'per week',
+      tdays: 'training days', target: 'Target weight (kg)', setT: 'Calculate', reach: 'Time to reach target:',
+      months: 'months', reached: 'You have already reached your target weight 🎉', wrongDir: 'Your current goal does not lead toward this target weight. Change the goal in your profile.',
+      noteGain: (c, m, w1) => `If you eat about ${c} kcal daily (+${m} kcal above TDEE) and complete your workout program, you could gain about +${w1} kg in a month. Roughly half of it is muscle, the rest fat plus water/glycogen. Realistic muscle gain for beginners is ~0.5–1 kg per month.`,
+      noteLose: (c, m, w1) => `If you eat about ${c} kcal daily (−${m} kcal below TDEE) and complete your workout program, you could lose about −${w1} kg in a month. Keep protein high to protect muscle.`,
+      noteMain: c => `If you eat about ${c} kcal daily and complete your workout program, your weight and shape will stay stable.`,
+      disc: 'This is an estimate (1 kg ≈ 7700 kcal). Real results vary with sleep, stress and your body. You need to hit the daily target and weekly training days consistently.'
+    },
+    RU: {
+      title: 'Прогноз по Цели', gain: 'Набор массы / мышц', lose: 'Похудение', maintain: 'Поддержание формы',
+      daily: 'Дневная цель', tdee: 'Примерный расход (TDEE)', diff: 'Разница', kcal: 'ккал', kg: 'кг',
+      m1: 'Через 1 месяц', m3: 'Через 3 месяца', per: 'Изменение в месяц', train: 'в неделю',
+      tdays: 'дн. тренировок', target: 'Целевой вес (кг)', setT: 'Рассчитать', reach: 'Время до цели:',
+      months: 'мес.', reached: 'Вы уже достигли целевого веса 🎉', wrongDir: 'Текущая цель не ведёт к этому весу. Измените цель в профиле.',
+      noteGain: (c, m, w1) => `Если есть около ${c} ккал в день (+${m} ккал к TDEE) и выполнять программу тренировок, за месяц можно набрать около +${w1} кг. Примерно половина — мышцы, остальное жир и вода/гликоген. Реальный прирост мышц у новичков ~0.5–1 кг в месяц.`,
+      noteLose: (c, m, w1) => `Если есть около ${c} ккал в день (−${m} ккал от TDEE) и выполнять программу тренировок, за месяц можно сбросить около −${w1} кг. Держите белок высоким, чтобы сохранить мышцы.`,
+      noteMain: c => `Если есть около ${c} ккал в день и выполнять программу тренировок, вес и форма сохранятся.`,
+      disc: 'Это оценка (1 кг ≈ 7700 ккал). Реальный результат зависит от сна, стресса и организма. Нужно стабильно выполнять дневную норму и тренировки.'
+    }
+  };
+
+  const tKey = () => 'nutrifit_target_weight_' + appState.currentUser.email.trim().toLowerCase();
+  const getTarget = () => { try { return parseFloat(localStorage.getItem(tKey())) || 0; } catch (e) { return 0; } };
+
+  window.setGoalTarget = function () {
+    const v = parseFloat(($('gf-target') || {}).value);
+    try { if (v > 0) localStorage.setItem(tKey(), String(v)); else localStorage.removeItem(tKey()); } catch (e) {}
+    renderGoalForecast();
+  };
+
+  window.renderGoalForecast = function () {
+    const u = appState.currentUser, tab = $('tab-dashboard');
+    if (!u || !u.targets || !tab) return;
+    let card = $('goal-forecast-card');
+    if (!card) {
+      card = document.createElement('div');
+      card.id = 'goal-forecast-card';
+      card.className = 'bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm w-full max-w-full overflow-hidden';
+      // banner-dan sonra yerləşdir
+      tab.insertBefore(card, tab.children[1] || null);
+    }
+    const L = T[lang()] || T.AZ;
+    const cal = u.targets.cal, tdee = u.tdee, diff = cal - tdee;
+    const monthKg = Math.round((diff * 30 / KCAL_PER_KG) * 10) / 10; // işarəli
+    const abs1 = Math.abs(monthKg).toFixed(1);
+    const w1 = Math.round((u.weight + monthKg) * 10) / 10;
+    const w3 = Math.round((u.weight + monthKg * 3) * 10) / 10;
+    const sign = n => (n > 0 ? '+' : n < 0 ? '−' : '±');
+
+    let note;
+    if (u.goal === 'gain') note = L.noteGain(cal, Math.abs(diff), abs1);
+    else if (u.goal === 'lose') note = L.noteLose(cal, Math.abs(diff), abs1);
+    else note = L.noteMain(cal);
+
+    const target = getTarget();
+    let targetMsg = '';
+    if (target > 0) {
+      const delta = target - u.weight;
+      if (Math.abs(delta) < 0.1) targetMsg = L.reached;
+      else if (monthKg === 0 || (delta > 0) !== (monthKg > 0)) targetMsg = L.wrongDir;
+      else targetMsg = L.reach + ' <b>' + (Math.abs(delta) / Math.abs(monthKg)).toFixed(1) + ' ' + L.months + '</b>';
+    }
+
+    const goalCls = u.goal === 'gain' ? 'text-emerald-600' : u.goal === 'lose' ? 'text-amber-600' : 'text-teal-600';
+    const box = (label, val, cls) => '<div class="min-w-0 p-2.5 sm:p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-center">' +
+      '<span class="text-[10px] text-slate-400 block leading-tight break-words">' + label + '</span><span class="block mt-0.5 text-[13px] sm:text-sm font-extrabold break-words ' + (cls || 'text-slate-800 dark:text-slate-100') + '">' + val + '</span></div>';
+
+    card.innerHTML =
+      '<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3">' +
+        '<h3 class="text-sm font-bold text-slate-700 dark:text-slate-300"><i class="fa-solid fa-bullseye text-emerald-500 mr-1.5"></i>' + L.title + '</h3>' +
+        '<span class="text-[11px] font-bold break-words ' + goalCls + '">' + L[u.goal] + ' · ' + u.workoutDays + ' ' + L.tdays + '</span></div>' +
+      '<div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3">' +
+        box(L.daily, cal + ' ' + L.kcal, 'text-emerald-600') +
+        box(L.tdee, tdee + ' ' + L.kcal) +
+        box(L.diff, sign(diff) + Math.abs(diff) + ' ' + L.kcal, goalCls) +
+        box(L.per, sign(monthKg) + abs1 + ' ' + L.kg, goalCls) +
+      '</div>' +
+      '<div class="grid grid-cols-1 min-[420px]:grid-cols-2 gap-2 sm:gap-3 mb-3">' +
+        box(L.m1, u.weight + ' → ' + w1 + ' ' + L.kg, goalCls) +
+        box(L.m3, u.weight + ' → ' + w3 + ' ' + L.kg, goalCls) +
+      '</div>' +
+      '<p class="text-xs text-slate-700 dark:text-slate-200 leading-relaxed break-words p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/40">' + esc(note) + '</p>' +
+      '<div class="flex flex-wrap items-center gap-2 mt-3">' +
+        '<label for="gf-target" class="w-full sm:w-auto text-[11px] font-bold text-slate-600 dark:text-slate-400">' + L.target + '</label>' +
+        '<input id="gf-target" type="number" inputmode="decimal" min="30" max="250" step="0.5" value="' + (target || '') + '" class="flex-1 min-w-0 sm:flex-none sm:w-24 px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-base sm:text-xs outline-none focus:ring-2 focus:ring-emerald-500">' +
+        '<button type="button" onclick="setGoalTarget()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition">' + L.setT + '</button>' +
+        (targetMsg ? '<span class="w-full text-[11px] text-slate-600 dark:text-slate-300 break-words">' + targetMsg + '</span>' : '') + '</div>' +
+      '<p class="text-[10px] text-slate-400 mt-3">' + esc(L.disc) + '</p>';
+  };
+
+  const _upd = updateUserUIInfo;
+  updateUserUIInfo = function () { _upd.apply(this, arguments); try { renderGoalForecast(); } catch (e) { console.warn(e); } };
+  const _sl = setLanguage;
+  setLanguage = function (l) { _sl(l); try { renderGoalForecast(); } catch (e) {} };
+  try { if (appState.currentUser) renderGoalForecast(); } catch (e) {}
+})();
+</script>
 </body>
 </html>
