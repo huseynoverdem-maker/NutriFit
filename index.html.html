@@ -3999,6 +3999,233 @@ html.dark .mobile-nav-btn.ft-active{color:rgb(var(--emerald-400))!important}
   });
 })();
 </script>
+<!-- ======= NutriFit yenilik bloku 3: bunu index.html-də axırıncı </body> teqindən ƏVVƏL yapışdır ======= -->
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const lang = () => (appState && appState.lang) || 'AZ';
+  const PIECE = ['i10', 'i25', 'i36'];
+  const qOf = id => (appState.qty && appState.qty[id]) || 1;
 
+  /* =====================================================
+     1) Giriş / Qeydiyyat: forma SAĞDA, sol tərəfdə təqdimat
+     ===================================================== */
+  (function () {
+    const am = $('auth-modal');
+    if (!am || !am.firstElementChild || $('auth-promo')) return;
+    const card = am.firstElementChild;
+
+    // overlay: mövcud 'hidden' vəziyyətinə toxunmuruq
+    am.classList.remove('bg-slate-950/90', 'backdrop-blur-md', 'flex', 'items-center', 'justify-center', 'p-4');
+    am.classList.add('bg-white', 'dark:bg-slate-950');
+
+    // kartı sadələşdir (özü şəffaf, fon sağ panelə verilir)
+    card.classList.remove('bg-white', 'dark:bg-slate-900', 'shadow-2xl', 'border', 'border-slate-200', 'dark:border-slate-800', 'rounded-3xl', 'my-auto');
+    card.classList.add('bg-transparent');
+
+    const wrap = document.createElement('div');
+    wrap.className = 'min-h-full flex flex-col lg:flex-row';
+
+    const left = document.createElement('div');
+    left.id = 'auth-promo';
+    left.className = 'hidden lg:flex flex-1 relative overflow-hidden flex-col items-center justify-center px-10 py-12 bg-slate-50 dark:bg-slate-900';
+    left.innerHTML =
+      '<div class="absolute -top-24 -left-24 w-80 h-80 rounded-full blur-3xl opacity-30" style="background:#10b981"></div>' +
+      '<div class="absolute -bottom-24 -right-16 w-80 h-80 rounded-full blur-3xl opacity-25" style="background:#2dd4bf"></div>' +
+
+      '<div class="absolute top-8 left-8 flex items-center gap-2">' +
+        '<div class="h-11 w-11 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg"><i class="fa-solid fa-seedling text-xl"></i></div>' +
+        '<span class="text-xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">NutriFit</span>' +
+      '</div>' +
+
+      '<div class="relative z-10 text-center max-w-xl">' +
+        '<h2 class="text-4xl xl:text-5xl font-semibold leading-tight text-slate-800 dark:text-slate-100">Qidalanmanı və məşqini<br>' +
+        '<span style="background:linear-gradient(90deg,#10b981,#14b8a6,#06b6d4);-webkit-background-clip:text;background-clip:text;color:transparent">bir yerdə</span> izlə.</h2>' +
+        '<p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Kalori, makro, AI qida analizi və fərdi məşq planı — hamısı bir hesabda, bütün cihazlarında.</p>' +
+      '</div>' +
+
+      '<div class="relative z-10 mt-10 h-[330px] w-[400px] max-w-full">' +
+        // sol kart: streak
+        '<div class="absolute left-0 top-16 w-40 -rotate-6 rounded-2xl p-3 bg-white dark:bg-slate-800 shadow-xl border border-slate-100 dark:border-slate-700">' +
+          '<div class="flex items-center gap-2"><span class="text-2xl">🔥</span><div><div class="text-lg font-extrabold text-amber-500 leading-none">12 gün</div><div class="text-[10px] text-slate-400">Gündəlik streak</div></div></div>' +
+          '<div class="flex gap-1 mt-3">' + [1,1,1,1,1,0,0].map(x => '<div class="flex-1 h-6 rounded-md ' + (x ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700') + '"></div>').join('') + '</div>' +
+        '</div>' +
+        // sağ kart: AI çatbot
+        '<div class="absolute right-0 top-20 w-44 rotate-6 rounded-2xl p-3 bg-white dark:bg-slate-800 shadow-xl border border-slate-100 dark:border-slate-700">' +
+          '<div class="flex items-center gap-1.5 mb-2"><span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]"><i class="fa-solid fa-robot"></i></span><span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">AI Qida Çatbotu</span></div>' +
+          '<div class="rounded-xl bg-slate-100 dark:bg-slate-700 p-2 text-[10px] leading-snug text-slate-700 dark:text-slate-200">Toyuq + düyü + brokoli<br><b class="text-emerald-600">620 kkal</b> · <b>48g</b> zülal</div>' +
+          '<div class="mt-2 rounded-lg bg-emerald-600 text-white text-[10px] font-bold text-center py-1">Gündəliyə əlavə et</div>' +
+        '</div>' +
+        // mərkəz kart: kalori halqası
+        '<div class="absolute left-1/2 -translate-x-1/2 top-0 w-56 z-10 rounded-3xl p-4 bg-white dark:bg-slate-800 shadow-2xl border border-slate-100 dark:border-slate-700">' +
+          '<div class="text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Gündəlik Kalori Hədəfi</div>' +
+          '<div class="relative w-28 h-28 mx-auto"><svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">' +
+            '<circle cx="50" cy="50" r="40" stroke="#e2e8f0" stroke-width="9" fill="none"/>' +
+            '<circle cx="50" cy="50" r="40" stroke="#10b981" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="158 251.3"/></svg>' +
+            '<div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-xl font-extrabold text-slate-800 dark:text-slate-100">1840</span><span class="text-[9px] text-slate-400">/ 2911 kkal</span></div></div>' +
+          '<div class="mt-3 space-y-1.5">' +
+            [['Zülal', 72, '#10b981'], ['Karb', 55, '#14b8a6'], ['Yağ', 40, '#f59e0b']].map(m =>
+              '<div><div class="flex justify-between text-[9px] font-semibold text-slate-500"><span>' + m[0] + '</span><span>' + m[1] + '%</span></div>' +
+              '<div class="h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden"><div class="h-full rounded-full" style="width:' + m[1] + '%;background:' + m[2] + '"></div></div></div>').join('') +
+          '</div>' +
+        '</div>' +
+        // üzən çiplər
+        '<div class="absolute -left-2 top-2 z-20 px-2.5 py-1 rounded-full bg-amber-500 text-white text-[10px] font-bold shadow-lg">💪 Məşq planı</div>' +
+        '<div class="absolute right-2 bottom-4 z-20 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold shadow-lg">🥗 100+ ərzaq</div>' +
+      '</div>' +
+
+      '<div class="relative z-10 mt-4 flex flex-wrap justify-center gap-x-6 gap-y-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">' +
+        '<span><i class="fa-solid fa-check text-emerald-500 mr-1"></i>Soyuducudan resept</span>' +
+        '<span><i class="fa-solid fa-check text-emerald-500 mr-1"></i>AI foto analiz</span>' +
+        '<span><i class="fa-solid fa-check text-emerald-500 mr-1"></i>PDF hesabat</span>' +
+      '</div>';
+
+    const right = document.createElement('div');
+    right.className = 'flex-1 lg:flex-none lg:w-[46%] xl:w-[40%] flex flex-col items-center justify-center p-4 sm:p-8 lg:border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950';
+    right.appendChild(card);
+    right.insertAdjacentHTML('beforeend', '<p class="mt-4 text-[11px] text-slate-400">NutriFit · by Ardam Huseynov</p>');
+
+    wrap.appendChild(left);
+    wrap.appendChild(right);
+    am.appendChild(wrap);
+  })();
+
+  /* =====================================================
+     2) Soyuducu: istənilən ərzağı birbaşa gündəlik qrafikə əlavə et
+     ===================================================== */
+  const T = {
+    AZ: { btn: '+ Gündəliyə', title: 'Gündəliyə əlavə et', amount: 'Miqdar', g: 'qram', pc: 'ədəd', add: 'Əlavə et', all: 'Seçilənləri gündəliyə əlavə et', none: 'Əvvəlcə ərzaq seçin!', bad: 'Miqdarı daxil edin!', kcal: 'kkal', p: 'Zülal', c: 'Karb', f: 'Yağ' },
+    EN: { btn: '+ Add to log', title: 'Add to daily log', amount: 'Amount', g: 'grams', pc: 'pcs', add: 'Add', all: 'Add selected to daily log', none: 'Select an ingredient first!', bad: 'Enter an amount!', kcal: 'kcal', p: 'Protein', c: 'Carbs', f: 'Fat' },
+    RU: { btn: '+ В дневник', title: 'Добавить в дневник', amount: 'Количество', g: 'грамм', pc: 'шт', add: 'Добавить', all: 'Добавить выбранное в дневник', none: 'Сначала выберите продукт!', bad: 'Введите количество!', kcal: 'ккал', p: 'Белок', c: 'Углев.', f: 'Жиры' }
+  };
+  const tt = () => T[lang()] || T.AZ;
+  const nameOf = it => (it.name[lang()] || it.name.AZ).replace(/\s*\(.*?\)/g, '');
+
+  window.ingLogOpen = function (id) {
+    const it = ingredientsDatabase.find(x => x.id === id); if (!it) return;
+    const L = tt(), piece = PIECE.includes(id), name = nameOf(it);
+    const def = piece ? qOf(id) : Math.round(qOf(id) * 100);
+    const old = $('ing-log-modal'); if (old) old.remove();
+    const o = document.createElement('div');
+    o.id = 'ing-log-modal';
+    o.className = 'fixed inset-0 z-[295] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4';
+    o.innerHTML =
+      '<div class="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 relative">' +
+      '<button type="button" data-x class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>' +
+      '<div><h3 class="text-base font-bold text-slate-800 dark:text-slate-100 pr-8">' + esc(name) + '</h3><p class="text-[11px] text-slate-400">' + L.title + '</p></div>' +
+      '<div><label class="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">' + L.amount + ' (' + (piece ? L.pc : L.g) + ')</label>' +
+      '<input id="ilm-n" type="number" min="0" step="' + (piece ? 1 : 5) + '" value="' + def + '" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500"></div>' +
+      '<div id="ilm-m" class="grid grid-cols-4 gap-2 text-center p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-xs font-bold"></div>' +
+      '<button id="ilm-go" type="button" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-emerald-600/20"><i class="fa-solid fa-plus mr-1"></i>' + L.add + '</button></div>';
+    document.body.appendChild(o);
+
+    const calc = () => {
+      const n = Math.max(0, parseFloat($('ilm-n').value) || 0), f = piece ? n : n / 100;
+      return { n, cal: it.cal * f, prot: it.prot * f, carb: it.carb * f, fat: it.fat * f };
+    };
+    const paint = () => {
+      const r = calc();
+      $('ilm-m').innerHTML =
+        '<div><span class="block text-slate-800 dark:text-slate-100">' + Math.round(r.cal) + '</span><span class="text-[9px] text-slate-400 uppercase">' + L.kcal + '</span></div>' +
+        '<div><span class="block text-emerald-600">' + r.prot.toFixed(1) + 'g</span><span class="text-[9px] text-slate-400 uppercase">' + L.p + '</span></div>' +
+        '<div><span class="block text-teal-600">' + r.carb.toFixed(1) + 'g</span><span class="text-[9px] text-slate-400 uppercase">' + L.c + '</span></div>' +
+        '<div><span class="block text-amber-600">' + r.fat.toFixed(1) + 'g</span><span class="text-[9px] text-slate-400 uppercase">' + L.f + '</span></div>';
+    };
+    paint();
+    $('ilm-n').addEventListener('input', paint);
+    o.addEventListener('mousedown', e => { if (e.target === o || e.target.closest('[data-x]')) o.remove(); });
+    $('ilm-go').onclick = () => {
+      const r = calc();
+      if (r.n <= 0) return showToast(L.bad, 'error');
+      o.remove();
+      addMealToDailyLog(piece ? name + ' ×' + r.n : name + ' (' + r.n + 'g)', Math.round(r.cal), r.prot, r.carb, r.fat);
+    };
+    setTimeout(() => { const i = $('ilm-n'); if (i) { i.focus(); i.select(); } }, 50);
+  };
+
+  function logAllSelected() {
+    const L = tt();
+    if (!appState.selectedIngs.length) return showToast(L.none, 'error');
+    let c = 0, p = 0, cb = 0, f = 0; const names = [];
+    appState.selectedIngs.forEach(id => {
+      const it = ingredientsDatabase.find(x => x.id === id); if (!it) return;
+      const q = qOf(id);
+      c += it.cal * q; p += it.prot * q; cb += it.carb * q; f += it.fat * q;
+      names.push(nameOf(it));
+    });
+    const title = names.slice(0, 3).join(' + ') + (names.length > 3 ? ' +' + (names.length - 3) : '');
+    addMealToDailyLog(title, Math.round(c), p, cb, f);
+  }
+
+  const _rig = renderIngredientGrid;
+  renderIngredientGrid = function () {
+    _rig();
+    const L = tt();
+    const g = $('ingredients-grid');
+    if (g) [...g.children].forEach(card => {
+      const m = /'(i\d+)'/.exec(card.getAttribute('onclick') || '');
+      if (!m || card.querySelector('[data-ilog]')) return;
+      const sel = appState.selectedIngs.includes(m[1]);
+      card.insertAdjacentHTML('beforeend',
+        '<button type="button" data-ilog onclick="event.stopPropagation();ingLogOpen(\'' + m[1] + '\')" class="mt-2 w-full py-1 rounded-lg text-[10px] font-bold transition ' +
+        (sel ? 'bg-black/25 text-white hover:bg-black/35' : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25') + '">' + L.btn + '</button>');
+    });
+    // "Seçilənləri gündəliyə əlavə et" düyməsi
+    let b = $('fridge-logall-btn');
+    if (!b) {
+      const gen = document.querySelector('button[onclick="generateRecipeFromFridge()"]');
+      if (gen) {
+        b = document.createElement('button');
+        b.id = 'fridge-logall-btn'; b.type = 'button';
+        b.className = 'flex-1 sm:flex-none px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition';
+        b.onclick = logAllSelected;
+        gen.parentElement.insertBefore(b, gen);
+      }
+    }
+    if (b) b.innerHTML = '<i class="fa-solid fa-plus mr-1"></i>' + L.all;
+  };
+  try { renderIngredientGrid(); } catch (e) {}
+
+  /* =====================================================
+     3) Səhifəni yeniləyəndə eyni tabda qal (idarə panelinə atmasın)
+     ===================================================== */
+  const KEY = 'nutrifit_last_tab';
+  let restored = false;
+
+  const _st = switchTab;
+  switchTab = function (id) {
+    _st(id);
+    try { localStorage.setItem(KEY, id); } catch (e) {}
+  };
+
+  const _im = initMainApp;
+  initMainApp = function () {
+    _im();
+    if (restored) return;
+    restored = true;
+    let t = null;
+    try { t = localStorage.getItem(KEY); } catch (e) {}
+    if (!t || t === 'dashboard' || !$('tab-' + t)) return;
+    if (t === 'admin') {
+      // admin hüququ serverdən gəlir: düymə görünəndə keç
+      let n = 0;
+      const iv = setInterval(() => {
+        const nb = $('nav-admin');
+        if (nb && !nb.classList.contains('hidden')) { clearInterval(iv); switchTab('admin'); }
+        else if (++n > 15) clearInterval(iv);
+      }, 300);
+      return;
+    }
+    switchTab(t);
+  };
+
+  const _lo = handleLogout;
+  handleLogout = function () {
+    _lo();
+    try { switchTab('dashboard'); } catch (e) {}
+  };
+})();
+</script>
 </body>
 </html>
